@@ -8,53 +8,85 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Timer;
 
 public class UDPEchoClient {
-    public static final int BUFSIZE= 1024;
-    public static final int MYPORT= 0;
-    public static final String MSG= "An Echo Message!";
+    public static final int BUFSIZE = 1024;
+    public static final int MYPORT = 6000;
+    public static int TRANSFER_RATE = 0;
+    public static final String MSG = "An Echo Message!";
 
+
+    /*
+    Change the client and server so that you can specify the buffer size and a message transfer rate as command line parameters.
+    The buffer size is given in bytes, and the transfer rate in messages per second. If the transfer rate is 0, the client should send a single message once.
+
+
+    ip port buffsize transfer rate
+     */
     public static void main(String[] args) throws IOException {
-	byte[] buf= new byte[BUFSIZE];
-	if (args.length != 2) {
-	    System.err.printf("usage: %s server_name port\n", args[1]);
-	    System.exit(1);
-	}
-	
-	/* Create socket */
-	DatagramSocket socket= new DatagramSocket(null);
-	
-	/* Create local endpoint using bind() */
-	SocketAddress localBindPoint= new InetSocketAddress(MYPORT);
-	socket.bind(localBindPoint);
-	
-	/* Create remote endpoint */
-	SocketAddress remoteBindPoint=
-	    new InetSocketAddress(args[0],
-				  Integer.valueOf(args[1]));
-	
-	/* Create datagram packet for sending message */
-	DatagramPacket sendPacket=
-	    new DatagramPacket(MSG.getBytes(),
-			       MSG.length(),
-			       remoteBindPoint);
-	
-	/* Create datagram packet for receiving echoed message */
-	DatagramPacket receivePacket= new DatagramPacket(buf, buf.length);
-	
-	/* Send and receive message*/
-	socket.send(sendPacket);
-	socket.receive(receivePacket);
-	
-	/* Compare sent and received message */
-	String receivedString=
-	    new String(receivePacket.getData(),
-		       receivePacket.getOffset(),
-		       receivePacket.getLength());
-	if (receivedString.compareTo(MSG) == 0)
-	    System.out.printf("%d bytes sent and received\n", receivePacket.getLength());
-	else
-	    System.out.printf("Sent and received msg not equal!\n");
-	socket.close();
+        byte[] buf = new byte[BUFSIZE];
+
+        // Mandatory arguments
+        if (args.length < 2) {
+            System.err.printf("usage: %s server_name port\n", args[0]);
+            System.exit(1);
+        }
+
+        // Parse buffer-size
+        if (args.length == 3) {
+            buf = new byte[tryParse(args[2])];
+        }
+
+        // Parse transfer rate
+        if (args.length == 4) {
+            TRANSFER_RATE = tryParse(args[3]);
+        }
+
+        /* Create socket */
+        DatagramSocket socket = new DatagramSocket(null);
+
+        /* Create local endpoint using bind() */
+        SocketAddress localBindPoint = new InetSocketAddress(MYPORT);
+        socket.bind(localBindPoint);
+
+        /* Create remote endpoint */
+        SocketAddress remoteBindPoint =
+                new InetSocketAddress(args[0],
+                        Integer.parseInt(args[1]));
+
+        /* Create datagram packet for sending message */
+        DatagramPacket sendPacket = new DatagramPacket(MSG.getBytes(),
+                MSG.length(),
+                remoteBindPoint);
+
+        /* Create datagram packet for receiving echoed message */
+        DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
+
+
+        /* Send and receive message*/
+        sendReceive(socket, sendPacket, receivePacket, MSG);
+
+
+        //socket.close();
+    }
+
+    private static int tryParse(String i) {
+        try {
+            return Integer.parseInt(i);
+        } catch (NumberFormatException e) {
+            System.err.print("There was an error parsing command line arguments.");
+        }
+        System.exit(1);
+        return 0;
+    }
+
+    private static void sendReceive(DatagramSocket socket, DatagramPacket packet, DatagramPacket receive,  String message) {
+        if (TRANSFER_RATE == 0) {
+            new PacketTask(socket, packet, receive, message, 1).run();
+        } else {
+            Timer timer = new Timer();
+            timer.schedule(new PacketTask(socket, packet, receive,  message, TRANSFER_RATE), 0, 1000);
+        }
     }
 }
