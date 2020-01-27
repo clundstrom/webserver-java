@@ -19,12 +19,12 @@ public class UDPEchoServer {
 
         // Parse buffer-size
         if (args.length == 3) {
-            buf = new byte[tryParse(args[0])];
+            buf = new byte[ArgParser.tryParse(args[0])];
         }
 
         // Parse transfer rate
         if (args.length == 4) {
-            TRANSFER_RATE = tryParse(args[1]);
+            TRANSFER_RATE = ArgParser.tryParse(args[1]);
         }
 
 
@@ -53,16 +53,5 @@ public class UDPEchoServer {
             System.out.printf("UDP echo request from %s", receivePacket.getAddress().getHostAddress());
             System.out.printf(" using port %d\n", receivePacket.getPort());
         }
-    }
-
-    private static int tryParse(String i){
-        try{
-            return Integer.parseInt(i);
-        }
-        catch (NumberFormatException e){
-            System.err.print("There was an error parsing command line arguments.");
-        }
-        System.exit(1);
-        return 0;
     }
 }

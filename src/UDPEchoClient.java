@@ -30,14 +30,13 @@ public class UDPEchoClient {
 
         // Parse buffer-size
         if (args.length == 3) {
-            buf = new byte[tryParse(args[2])];
+            buf = new byte[ArgParser.tryParse(args[2])];
         }
 
         // Parse transfer rate
         if (args.length == 4) {
-            TRANSFER_RATE = tryParse(args[3]);
+            TRANSFER_RATE = ArgParser.tryParse(args[3]);
         }
-
 
         try {
             /* Create socket */
@@ -74,15 +73,6 @@ public class UDPEchoClient {
         }
     }
 
-    private static int tryParse(String i) {
-        try {
-            return Integer.parseInt(i);
-        } catch (NumberFormatException e) {
-            System.err.print("There was an error parsing command line arguments.");
-        }
-        System.exit(1);
-        return 0;
-    }
 
     private static void sendReceive(DatagramSocket socket, DatagramPacket packet, DatagramPacket receive,  String message, Logger logger) {
         if (TRANSFER_RATE == 0) {
