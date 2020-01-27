@@ -9,7 +9,7 @@ import java.net.DatagramSocket;
  */
 public class PacketTask implements Runnable {
 
-    private static final boolean DEBUG = false;
+    private static boolean DEBUG = false;
 
     private DatagramSocket socket;
     private DatagramPacket sent;
@@ -79,5 +79,9 @@ public class PacketTask implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setDebug(boolean debug) {
+        this.DEBUG = debug;
     }
 }

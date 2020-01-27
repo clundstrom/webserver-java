@@ -10,6 +10,7 @@ public class Logger {
     @Override
     public String toString() {
         return "Logger{" + "sent=" + totalSent + ", received=" + totalReceived + ", remaining="+remaining + '}';
+
     }
 
     public long getSent() {

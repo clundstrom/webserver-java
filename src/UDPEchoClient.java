@@ -14,10 +14,13 @@ public class UDPEchoClient {
     public static int TRANSFER_RATE = 1;
 
 
+    // Enabling debug will show individual packets and their size. Not suitable for high rates.
+    public static final boolean DEBUG = false;
+
     public static void main(String[] args) {
         // Handle mandatory arguments
         if (args.length < 2) {
-            System.err.printf("usage: %s server_name port\n", args[0]);
+            System.err.println("Error: Specify arguments server_name port (buffer-size) (transfer-rate) ");
             System.exit(1);
         }
 
@@ -35,49 +38,54 @@ public class UDPEchoClient {
         try {
             byte[] buf = new byte[BUFSIZE];
 
-            /* Create socket */
+            // Create socket
             DatagramSocket socket = new DatagramSocket(null);
 
-            /* Create local endpoint using bind() */
+            // Create local endpoint using bind()
             SocketAddress localBindPoint = new InetSocketAddress(MYPORT);
             socket.bind(localBindPoint);
 
-            /* Create remote endpoint */
+            // Create remote endpoint
             SocketAddress remoteBindPoint =
                     new InetSocketAddress(args[0],
                             Integer.parseInt(args[1]));
 
-            /* Create datagram packet for sending message */
+            // Create datagram packet for sending message
             DatagramPacket sendPacket = new DatagramPacket(MSG.getBytes(),
                     MSG.length(),
                     remoteBindPoint);
 
-            /* Create datagram packet for receiving echoed message */
+            // Create datagram packet for receiving echoed message
             DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
 
-            /* Create packet logger */
+            // Create packet logger
             Logger logger = new Logger();
 
-            /* Send and receive message*/
-            sendReceive(socket, sendPacket, receivePacket, MSG, logger);
+            // Create packet-task
+            PacketTask task = new PacketTask(socket, sendPacket, receivePacket, MSG, TRANSFER_RATE, logger);
+            task.setDebug(DEBUG);
 
-        }
+            // Send and receive message
+            sendReceive(task);
 
-        catch (IOException | IllegalArgumentException e ){
+        } catch (IOException | IllegalArgumentException e) {
             System.err.println("There was an error establishing a connection.");
             System.exit(1);
         }
     }
 
 
-    private static void sendReceive(DatagramSocket socket, DatagramPacket packet, DatagramPacket receive,  String message, Logger logger) {
+    /**
+     * Function which handles package scheduling for the client.
+     * @param task Custom task which sends and receives packages.
+     */
+    private static void sendReceive(PacketTask task) {
+        // Special case, run once.
         if (TRANSFER_RATE == 0) {
-            new PacketTask(socket, packet, receive, message, 1, logger).run();
+            task.run();
         } else {
-            PacketTask task = new PacketTask(socket, packet, receive, message, TRANSFER_RATE, logger);
             ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
             es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
-
         }
     }
 }
