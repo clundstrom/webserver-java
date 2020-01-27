@@ -19,7 +19,7 @@ public class UDPEchoClient {
     public static int TRANSFER_RATE = 0;
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         byte[] buf = new byte[BUFSIZE];
 
         // Mandatory arguments
@@ -38,33 +38,40 @@ public class UDPEchoClient {
             TRANSFER_RATE = tryParse(args[3]);
         }
 
-        /* Create socket */
-        DatagramSocket socket = new DatagramSocket(null);
 
-        /* Create local endpoint using bind() */
-        SocketAddress localBindPoint = new InetSocketAddress(MYPORT);
-        socket.bind(localBindPoint);
+        try {
+            /* Create socket */
+            DatagramSocket socket = new DatagramSocket(null);
 
-        /* Create remote endpoint */
-        SocketAddress remoteBindPoint =
-                new InetSocketAddress(args[0],
-                        Integer.parseInt(args[1]));
+            /* Create local endpoint using bind() */
+            SocketAddress localBindPoint = new InetSocketAddress(MYPORT);
+            socket.bind(localBindPoint);
 
-        /* Create datagram packet for sending message */
-        DatagramPacket sendPacket = new DatagramPacket(MSG.getBytes(),
-                MSG.length(),
-                remoteBindPoint);
+            /* Create remote endpoint */
+            SocketAddress remoteBindPoint =
+                    new InetSocketAddress(args[0],
+                            Integer.parseInt(args[1]));
 
-        /* Create datagram packet for receiving echoed message */
-        DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
+            /* Create datagram packet for sending message */
+            DatagramPacket sendPacket = new DatagramPacket(MSG.getBytes(),
+                    MSG.length(),
+                    remoteBindPoint);
 
+            /* Create datagram packet for receiving echoed message */
+            DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
 
-        /* Create packet logger */
-        Logger logger = new Logger();
+            /* Create packet logger */
+            Logger logger = new Logger();
 
-        /* Send and receive message*/
-        sendReceive(socket, sendPacket, receivePacket, MSG, logger);
+            /* Send and receive message*/
+            sendReceive(socket, sendPacket, receivePacket, MSG, logger);
 
+        }
+
+        catch (IOException | IllegalArgumentException e ){
+            System.err.println("There was an error establishing a connection.");
+            System.exit(1);
+        }
     }
 
     private static int tryParse(String i) {
