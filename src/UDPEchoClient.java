@@ -8,7 +8,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Timer;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class UDPEchoClient {
     public static final int BUFSIZE = 1024;
@@ -64,8 +66,11 @@ public class UDPEchoClient {
         DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
 
 
+        /* Create packet logger */
+        Logger logger = new Logger();
+
         /* Send and receive message*/
-        sendReceive(socket, sendPacket, receivePacket, MSG);
+        sendReceive(socket, sendPacket, receivePacket, MSG, logger);
 
 
         //socket.close();
@@ -81,12 +86,14 @@ public class UDPEchoClient {
         return 0;
     }
 
-    private static void sendReceive(DatagramSocket socket, DatagramPacket packet, DatagramPacket receive,  String message) {
+    private static void sendReceive(DatagramSocket socket, DatagramPacket packet, DatagramPacket receive,  String message, Logger logger) {
         if (TRANSFER_RATE == 0) {
-            new PacketTask(socket, packet, receive, message, 1).run();
+            new PacketTask(socket, packet, receive, message, 1, logger).run();
         } else {
-            Timer timer = new Timer();
-            timer.schedule(new PacketTask(socket, packet, receive,  message, TRANSFER_RATE), 0, 1000);
+            PacketTask task = new PacketTask(socket, packet, receive, message, 1, logger);
+            ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
+            es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
+
         }
     }
 }
