@@ -39,9 +39,9 @@ public class PacketTask implements Runnable {
                 socket.send(sent);
                 socket.receive(received);
 
-                // Update logger.
+                // Update total packets to logger.
                 logger.setSent(logger.getSent() + 1);
-                logger.setReceived(logger.getReceived() + 1);
+                logger.setTotalReceived(logger.getTotalReceived() + 1);
 
             } catch (IOException e) {
                 System.err.println("There was an error while sending or receiving packets.");
@@ -69,7 +69,7 @@ public class PacketTask implements Runnable {
             }
             logger.setRemaining(nrOfPackets-i-1);
         }
-        System.out.println(logger.toString());
+        System.out.println(logger);
         total = System.currentTimeMillis();
 
 

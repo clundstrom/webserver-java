@@ -3,29 +3,29 @@
  */
 public class Logger {
 
-    private volatile long sent = 0;
-    private volatile long received = 0;
+    private volatile long totalSent = 0;
+    private volatile long totalReceived = 0;
     private volatile long remaining = 0;
 
     @Override
     public String toString() {
-        return "Logger{" + "sent=" + sent + ", received=" + received + ", remaining="+remaining + '}';
+        return "Logger{" + "sent=" + totalSent + ", received=" + totalReceived + ", remaining="+remaining + '}';
     }
 
     public long getSent() {
-        return sent;
+        return totalSent;
     }
 
     public synchronized void setSent(long sent) {
-        this.sent = sent;
+        this.totalSent = sent;
     }
 
-    public long getReceived() {
-        return received;
+    public long getTotalReceived() {
+        return totalReceived;
     }
 
-    public synchronized void setReceived(long received) {
-        this.received = received;
+    public synchronized void setTotalReceived(long totalReceived) {
+        this.totalReceived = totalReceived;
     }
 
     public void setRemaining(long remaining) {
