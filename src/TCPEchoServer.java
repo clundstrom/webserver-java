@@ -27,10 +27,10 @@ public class TCPEchoServer {
                 // Accept incoming requests
                 Socket incoming = socket.accept();
                 // Create task to respond to client
-                TCPRespondTask task = new TCPRespondTask(incoming);
+                TCPRespondTask task = new TCPRespondTask(incoming, "Pong!");
 
                 // Create separate thread for the task
-
+                es.submit(task);
 
 
             }
