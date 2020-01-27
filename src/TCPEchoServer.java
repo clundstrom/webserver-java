@@ -2,8 +2,6 @@ import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class TCPEchoServer {
 
@@ -20,8 +18,6 @@ public class TCPEchoServer {
             // Create ExecutorService with expandable threadpool
             ExecutorService es = Executors.newCachedThreadPool();
 
-
-
             while (true) {
                 // Accept incoming requests
                 Socket incoming = socket.accept();
@@ -31,7 +27,12 @@ public class TCPEchoServer {
                 TCPRespondTask task = new TCPRespondTask(incoming, "Pong!");
 
                 // Create separate thread for the task
-                es.submit(task);
+                es.submit(new Runnable() {
+                    @Override
+                    public void run() {
+
+                    }
+                });
             }
         } catch (IOException e) {
             e.printStackTrace();
