@@ -34,7 +34,6 @@ public class UDPEchoClient {
             TRANSFER_RATE = ArgParser.tryParse(args[3]);
         }
 
-
         try {
             byte[] buf = new byte[BUFSIZE];
 
@@ -46,9 +45,8 @@ public class UDPEchoClient {
             socket.bind(localBindPoint);
 
             // Create remote endpoint
-            SocketAddress remoteBindPoint =
-                    new InetSocketAddress(args[0],
-                            Integer.parseInt(args[1]));
+            //TODO: Kolla så parseInt inte throwar
+            SocketAddress remoteBindPoint = new InetSocketAddress(args[0], Integer.parseInt(args[1]));
 
             // Create datagram packet for sending message
             DatagramPacket sendPacket = new DatagramPacket(MSG.getBytes(),
