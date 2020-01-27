@@ -90,7 +90,7 @@ public class UDPEchoClient {
         if (TRANSFER_RATE == 0) {
             new PacketTask(socket, packet, receive, message, 1, logger).run();
         } else {
-            PacketTask task = new PacketTask(socket, packet, receive, message, 1, logger);
+            PacketTask task = new PacketTask(socket, packet, receive, message, TRANSFER_RATE, logger);
             ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
             es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
 

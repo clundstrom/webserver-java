@@ -23,17 +23,20 @@ public class PacketTask implements Runnable {
 
     @Override
     public void run() {
-        int out = 0;
-        int in = 0;
+        int nrOutPackets = 0;
+        int nrInPackets = 0;
         long start = System.currentTimeMillis();
+        long end;
+
+        /* Process packages */
         for (int i = 0; i < nrOfPackets; i++) {
             try {
                 socket.send(sent);
-                out++;
+                nrOutPackets++;
                 socket.receive(received);
-                in++;
+                nrInPackets++;
             } catch (IOException e) {
-                System.out.println("There was an error.");
+                System.err.println("There was an error while sending or receiving packets.");
             }
 
             /* Compare sent and received message */
@@ -41,28 +44,29 @@ public class PacketTask implements Runnable {
                     new String(received.getData(),
                             received.getOffset(),
                             received.getLength());
-            if (receivedString.compareTo(message) == 0)
+            if (receivedString.compareTo(message) == 0){
                 System.out.printf("%d bytes sent and received\n", received.getLength());
-            else
+            }
+            else{
                 System.out.print("Sent and received msg not equal!\n");
-        }
-        long end = System.currentTimeMillis();
-
-        /* Wait  */
-        while (end - start <= 1000){
-            if(end-start > 1000){
-                break;
-
             }
+
             end = System.currentTimeMillis();
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            if(end-start >= 1000) return;
         }
-        logger.setSent(logger.getSent()+out);
-        logger.setReceived(logger.getReceived()+in);
+        end = System.currentTimeMillis();
+
+        /* Update logger */
+        logger.setSent(logger.getSent() + nrOutPackets);
+        logger.setReceived(logger.getReceived() + nrInPackets);
         System.out.println("Packages(sent/received): " + logger.getSent() + ", " + logger.getReceived());
+
+
+        /* Wait until the full second has passed */
+        try {
+            Thread.sleep(1000 - (end - start));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
