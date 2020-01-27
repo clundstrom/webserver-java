@@ -11,7 +11,7 @@ public class UDPEchoClient {
     public static final int MYPORT = 6000;
     public static final String MSG = "An Echo Message!";
     public static int BUFSIZE = 1024;
-    public static int TRANSFER_RATE = 0;
+    public static int TRANSFER_RATE = 1;
 
 
     public static void main(String[] args) {
