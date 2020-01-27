@@ -1,8 +1,3 @@
-/*
-  UDPEchoClient.java
-  A simple echo client with no error handling
-*/
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -20,25 +15,26 @@ public class UDPEchoClient {
 
 
     public static void main(String[] args) {
-        byte[] buf = new byte[BUFSIZE];
-
-        // Mandatory arguments
+        // Handle mandatory arguments
         if (args.length < 2) {
             System.err.printf("usage: %s server_name port\n", args[0]);
             System.exit(1);
         }
 
         // Parse buffer-size
-        if (args.length == 3) {
-            buf = new byte[ArgParser.tryParse(args[2])];
+        if (args.length >= 3) {
+            BUFSIZE = ArgParser.tryParse(args[2]);
         }
 
         // Parse transfer rate
-        if (args.length == 4) {
+        if (args.length >= 4) {
             TRANSFER_RATE = ArgParser.tryParse(args[3]);
         }
 
+
         try {
+            byte[] buf = new byte[BUFSIZE];
+
             /* Create socket */
             DatagramSocket socket = new DatagramSocket(null);
 

@@ -10,8 +10,8 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class UDPEchoServer {
-    public static final int BUFSIZE = 1024;
     public static final int MYPORT = 6000;
+    public static int BUFSIZE = 1024;
     public static int TRANSFER_RATE = 0;
 
     public static void main(String[] args) throws IOException {
