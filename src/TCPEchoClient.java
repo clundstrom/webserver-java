@@ -7,7 +7,7 @@ import java.net.SocketAddress;
 public class TCPEchoClient {
 
     public static final int MYPORT = 6000;
-    public static final String MSG = "An Echo Message!";
+    public static final String MSG = "Ping!";
     public static int BUFSIZE = 1024;
 
 
@@ -42,7 +42,6 @@ public class TCPEchoClient {
 
             // Connect to remote, set conn timeout to 10sec
             socket.connect(remote, 10);
-
             // Open input stream
             InputStream is = socket.getInputStream();
 
