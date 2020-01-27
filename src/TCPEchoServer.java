@@ -27,12 +27,7 @@ public class TCPEchoServer {
                 TCPRespondTask task = new TCPRespondTask(incoming, "Pong!");
 
                 // Create separate thread for the task
-                es.submit(new Runnable() {
-                    @Override
-                    public void run() {
-
-                    }
-                });
+                es.submit(task);
             }
         } catch (IOException e) {
             e.printStackTrace();
