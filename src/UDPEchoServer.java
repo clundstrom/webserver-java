@@ -18,15 +18,14 @@ public class UDPEchoServer {
         byte[] buf = new byte[BUFSIZE];
 
         // Parse buffer-size
-        if (args.length == 3) {
+        if (args.length >= 3) {
             buf = new byte[ArgParser.tryParse(args[0])];
         }
 
         // Parse transfer rate
-        if (args.length == 4) {
+        if (args.length >= 4) {
             TRANSFER_RATE = ArgParser.tryParse(args[1]);
         }
-
 
         /* Create socket */
         DatagramSocket socket = new DatagramSocket(null);

@@ -3,7 +3,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 
+/**
+ * Class that represents a task which will send and receive packets at a specified TRANSFER RATE.
+ * Includes a logger which keeps track of amount of packages sent and received, also if packages are lost.
+ */
 public class PacketTask implements Runnable {
+
+    private static final boolean DEBUG = false;
 
     private DatagramSocket socket;
     private DatagramPacket sent;
@@ -23,18 +29,20 @@ public class PacketTask implements Runnable {
 
     @Override
     public void run() {
-        int nrOutPackets = 0;
-        int nrInPackets = 0;
         long start = System.currentTimeMillis();
-        long end;
+        long total;
 
         /* Process packages */
         for (int i = 0; i < nrOfPackets; i++) {
             try {
+                // Send and receive packets.
                 socket.send(sent);
-                nrOutPackets++;
                 socket.receive(received);
-                nrInPackets++;
+
+                // Update logger.
+                logger.setSent(logger.getSent() + 1);
+                logger.setReceived(logger.getReceived() + 1);
+
             } catch (IOException e) {
                 System.err.println("There was an error while sending or receiving packets.");
             }
@@ -45,26 +53,29 @@ public class PacketTask implements Runnable {
                             received.getOffset(),
                             received.getLength());
             if (receivedString.compareTo(message) == 0){
-                System.out.printf("%d bytes sent and received\n", received.getLength());
+                if(DEBUG)
+                    System.out.printf("%d bytes sent and received\n", received.getLength());
             }
             else{
                 System.out.print("Sent and received msg not equal!\n");
             }
 
-            end = System.currentTimeMillis();
-            if(end-start >= 1000) return;
-        }
-        end = System.currentTimeMillis();
+            total = System.currentTimeMillis()-start;
 
-        /* Update logger */
-        logger.setSent(logger.getSent() + nrOutPackets);
-        logger.setReceived(logger.getReceived() + nrInPackets);
+            if(total >= 1000){
+                logger.setRemaining(nrOfPackets-i-1);
+                System.out.println(logger.toString());
+                System.exit(0);
+            }
+            logger.setRemaining(nrOfPackets-i-1);
+        }
         System.out.println(logger.toString());
+        total = System.currentTimeMillis();
 
 
         /* Wait until the full second has passed */
         try {
-            Thread.sleep(1000 - (end - start));
+            Thread.sleep(1000 - (total - start));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

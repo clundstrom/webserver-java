@@ -5,10 +5,11 @@ public class Logger {
 
     private volatile long sent = 0;
     private volatile long received = 0;
+    private volatile long remaining = 0;
 
     @Override
     public String toString() {
-        return "Logger{" + "sent=" + sent + ", received=" + received + '}';
+        return "Logger{" + "sent=" + sent + ", received=" + received + ", remaining="+remaining + '}';
     }
 
     public long getSent() {
@@ -25,5 +26,13 @@ public class Logger {
 
     public synchronized void setReceived(long received) {
         this.received = received;
+    }
+
+    public void setRemaining(long remaining) {
+        this.remaining = remaining;
+    }
+
+    public long getRemaining() {
+        return remaining;
     }
 }
