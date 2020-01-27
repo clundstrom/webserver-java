@@ -8,10 +8,7 @@ public class Logger {
 
     @Override
     public String toString() {
-        return "Logger{" +
-                "sent=" + sent +
-                ", received=" + received +
-                '}';
+        return "Logger{" + "sent=" + sent + ", received=" + received + '}';
     }
 
     public long getSent() {

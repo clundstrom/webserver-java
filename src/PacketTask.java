@@ -59,7 +59,7 @@ public class PacketTask implements Runnable {
         /* Update logger */
         logger.setSent(logger.getSent() + nrOutPackets);
         logger.setReceived(logger.getReceived() + nrInPackets);
-        System.out.println("Packages(sent/received): " + logger.getSent() + ", " + logger.getReceived());
+        System.out.println(logger.toString());
 
 
         /* Wait until the full second has passed */

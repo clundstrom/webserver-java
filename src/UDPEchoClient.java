@@ -13,19 +13,12 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class UDPEchoClient {
-    public static final int BUFSIZE = 1024;
     public static final int MYPORT = 6000;
-    public static int TRANSFER_RATE = 0;
     public static final String MSG = "An Echo Message!";
+    public static int BUFSIZE = 1024;
+    public static int TRANSFER_RATE = 0;
 
 
-    /*
-    Change the client and server so that you can specify the buffer size and a message transfer rate as command line parameters.
-    The buffer size is given in bytes, and the transfer rate in messages per second. If the transfer rate is 0, the client should send a single message once.
-
-
-    ip port buffsize transfer rate
-     */
     public static void main(String[] args) throws IOException {
         byte[] buf = new byte[BUFSIZE];
 
@@ -72,8 +65,6 @@ public class UDPEchoClient {
         /* Send and receive message*/
         sendReceive(socket, sendPacket, receivePacket, MSG, logger);
 
-
-        //socket.close();
     }
 
     private static int tryParse(String i) {
