@@ -26,7 +26,7 @@ public class TCPTransmitTask implements Runnable {
         long start = System.currentTimeMillis();
         long total;
         try {
-            PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+            PrintWriter output = new PrintWriter(socket.getOutputStream());
 
             // Process packages
             for (int i = 0; i < nrOfPackets; i++) {
@@ -43,7 +43,6 @@ public class TCPTransmitTask implements Runnable {
                     logger.setRemaining(nrOfPackets - i - 1);
                     System.out.println(logger.toString());
                     output.close();
-                    socket.close();
                     System.exit(0);
                 }
 
@@ -60,9 +59,7 @@ public class TCPTransmitTask implements Runnable {
         /* Wait until the full second has passed */
         try {
             Thread.sleep(999 - (total - start));
-
-            socket.close();
-        } catch (InterruptedException | IOException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
