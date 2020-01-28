@@ -42,13 +42,11 @@ public class TCPTransmitTask implements Runnable {
                 if (total >= 1000) {
                     logger.setRemaining(nrOfPackets - i - 1);
                     System.out.println(logger.toString());
-                    output.close();
                     System.exit(0);
                 }
 
                 logger.setRemaining(nrOfPackets - i - 1);
             }
-            output.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

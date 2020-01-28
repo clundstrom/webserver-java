@@ -39,10 +39,12 @@ public class TCPEchoServer {
                 InputStream is = incoming.getInputStream();
                 byte[] buf = new byte[BUFSIZE];
 
-                int br = is.read(buf);
+                // Read into buffer
+                int bytesRead = is.read(buf);
+
                 // Write input as output
                 PrintWriter pw = new PrintWriter(incoming.getOutputStream());
-                System.out.println(new String(buf));
+                System.out.println("Message received: " + new String(buf));
                 //pw.write(is.read(buf));
 
                 // Create separate thread for the task

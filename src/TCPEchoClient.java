@@ -48,7 +48,7 @@ public class TCPEchoClient {
             socket.connect(remote, 10);
 
             // Create packet
-            TCPTransmitTask task = new TCPTransmitTask(socket,TRANSFER_RATE, "Pong!", logger);
+            TCPTransmitTask task = new TCPTransmitTask(socket,TRANSFER_RATE, MSG, logger);
 
             sendReceive(task);
 
