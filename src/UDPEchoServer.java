@@ -27,27 +27,29 @@ public class UDPEchoServer {
             TRANSFER_RATE = ArgParser.tryParse(args[1]);
         }
 
-        /* Create socket */
+        // Create socket
         DatagramSocket socket = new DatagramSocket(null);
 
-        /* Create local bind point */
+        // Create local bind point
         SocketAddress localBindPoint = new InetSocketAddress(MYPORT);
         socket.bind(localBindPoint);
+
+
         while (true) {
-            /* Create datagram packet for receiving message */
+            // Create datagram packet for receiving message
             DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
 
-            /* Receiving message */
+            // Receiving message
             socket.receive(receivePacket);
 
-            /* Create datagram packet for sending message */
+            // Create datagram packet for sending message
             DatagramPacket sendPacket =
                     new DatagramPacket(receivePacket.getData(),
                             receivePacket.getLength(),
                             receivePacket.getAddress(),
                             receivePacket.getPort());
 
-            /* Send message*/
+            // Send message
             socket.send(sendPacket);
             System.out.printf("UDP echo request from %s", receivePacket.getAddress().getHostAddress());
             System.out.printf(" using port %d\n", receivePacket.getPort());

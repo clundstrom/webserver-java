@@ -15,7 +15,7 @@ public class TCPEchoServer {
             // Create server socket and bind to port.
             ServerSocket socket = new ServerSocket(MYPORT);
 
-            // Create ExecutorService with expandable threadpool
+            // Create ExecutorService with expandable thread-pool
             ExecutorService es = Executors.newCachedThreadPool();
 
             while (true) {
@@ -23,7 +23,7 @@ public class TCPEchoServer {
                 Socket incoming = socket.accept();
 
                 // Create task to respond to client
-                System.out.println("Creating thread for incoming request: " + incoming.getInetAddress());
+                System.out.println("Creating thread for incoming request: " + incoming.getInetAddress() + " " + incoming.getPort());
                 TCPTransmitTask task = new TCPTransmitTask(incoming, "Pong!");
 
                 // Create separate thread for the task
