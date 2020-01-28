@@ -24,7 +24,7 @@ public class TCPEchoServer {
 
                 // Create task to respond to client
                 System.out.println("Creating thread for incoming request: " + incoming.getInetAddress());
-                TCPRespondTask task = new TCPRespondTask(incoming, "Pong!");
+                TCPTransmitTask task = new TCPTransmitTask(incoming, "Pong!");
 
                 // Create separate thread for the task
                 es.submit(task);

@@ -2,13 +2,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class TCPRespondTask implements Runnable {
+public class TCPTransmitTask implements Runnable {
 
     private Socket socket;
     private PrintWriter output;
     private String message;
 
-    public TCPRespondTask(Socket socket, String message) throws IOException {
+    public TCPTransmitTask(Socket socket, String message) throws IOException {
         this.socket = socket;
         this.output = new PrintWriter(socket.getOutputStream(), true);
         this.message = message;
