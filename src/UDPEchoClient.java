@@ -45,7 +45,6 @@ public class UDPEchoClient {
             socket.bind(localBindPoint);
 
             // Create remote endpoint
-            //TODO: Kolla så parseInt inte throwar
             SocketAddress remoteBindPoint = new InetSocketAddress(args[0], ArgParser.tryParse(args[1]));
 
             // Create datagram packet for sending message

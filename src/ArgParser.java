@@ -7,8 +7,9 @@ public class ArgParser {
         }
         catch (NumberFormatException e){
             System.err.print("There was an error parsing command line arguments.");
+            System.exit(1);
         }
-        System.exit(1);
+
         return 0;
     }
 }
