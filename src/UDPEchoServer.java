@@ -12,7 +12,6 @@ import java.net.SocketAddress;
 public class UDPEchoServer {
     public static final int MYPORT = 6000;
     public static int BUFSIZE = 1024;
-    public static int TRANSFER_RATE = 0;
 
     public static void main(String[] args) throws IOException {
         byte[] buf = new byte[BUFSIZE];
@@ -20,11 +19,6 @@ public class UDPEchoServer {
         // Parse buffer-size
         if (args.length >= 3) {
             buf = new byte[ArgParser.tryParse(args[0])];
-        }
-
-        // Parse transfer rate
-        if (args.length >= 4) {
-            TRANSFER_RATE = ArgParser.tryParse(args[1]);
         }
 
         // Create socket
