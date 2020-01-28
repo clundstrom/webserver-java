@@ -31,24 +31,27 @@ public class TCPEchoServer {
                 // Create task to respond to client
                 System.out.println("Creating thread for incoming request: " + incoming.getInetAddress() + " " + incoming.getPort());
 
-                //TCPTransmitTask task = new TCPTransmitTask(incoming,,"Pong!");
-
                 // DO THIS IN TASK
 
-                // Read input
-                InputStream is = incoming.getInputStream();
-                byte[] buf = new byte[BUFSIZE];
+                try {
+                    // Read input
+                    InputStream is = incoming.getInputStream();
+                    byte[] buf = new byte[BUFSIZE];
 
-                // Read into buffer
-                int bytesRead = is.read(buf);
+                    // Read into buffer
+                    int bytesRead = is.read(buf);
 
-                // Write input as output
-                PrintWriter pw = new PrintWriter(incoming.getOutputStream());
-                System.out.println("Message received: " + new String(buf));
-                //pw.write(is.read(buf));
+                    // Write input as output
+                    PrintWriter pw = new PrintWriter(incoming.getOutputStream());
+                    System.out.println("Message received: " + new String(buf));
+                    //pw.write(is.read(buf));
 
-                // Create separate thread for the task
-                //es.submit(task);
+                    // Create separate thread for the task
+                    //es.submit(task);
+                }catch (SocketException e){
+                    System.err.println("Connection reset by client.");
+                }
+
             }
         } catch (IOException e) {
             e.printStackTrace();
