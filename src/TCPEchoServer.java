@@ -43,7 +43,7 @@ public class TCPEchoServer {
 
                     // Write input as output
                     PrintWriter pw = new PrintWriter(incoming.getOutputStream());
-                    System.out.println("Message received: " + new String(buf));
+                    System.out.println("Message received: " + new String(buf, 0 , bytesRead));
                     //pw.write(is.read(buf));
 
                     // Create separate thread for the task
