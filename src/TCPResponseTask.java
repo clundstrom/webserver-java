@@ -1,7 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -15,25 +14,36 @@ public class TCPResponseTask implements Runnable {
         this.buffSize = buffSize;
     }
 
+    public TCPResponseTask(Socket socket) {
+        this.socket = socket;
+        this.buffSize = 0;
+    }
+
     @Override
     public void run() {
         try {
+            // Make sure a buffer size is specified
+            if (buffSize == 0) {
+                this.buffSize = socket.getReceiveBufferSize();
+            }
+
             // Read input
             InputStream is = socket.getInputStream();
 
-            byte[] buffer = new byte[buffSize];
-            int len = is.read(buffer);
+            // Create buffer
+            byte[] buf = new byte[buffSize];
 
-            OutputStream pw = socket.getOutputStream();
+            // Read input
+            int bytesRead = is.read(buf);
 
-            while (len != -1) {
-                pw.write(buffer, 0, len);
-                len = is.read(buffer);
+            // Create output-stream
+            OutputStream os = socket.getOutputStream();
+
+            // Write to output as long as there are bytes to read
+            while (bytesRead != -1) {
+                os.write(buf, 0, bytesRead);
+                bytesRead = is.read(buf);
             }
-            // Transfer input to output
-            //is.transferTo(socket.getOutputStream());
-
-
         } catch (SocketException e) {
             System.err.println("Connection reset by client.");
         } catch (IOException e) {

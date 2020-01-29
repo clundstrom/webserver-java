@@ -33,12 +33,10 @@ public class TCPEchoServer {
                 System.out.println("Creating thread for incoming request: " + incoming.getInetAddress() + " " + incoming.getPort());
 
                 // Create separate thread for the task
-
                 TCPResponseTask task = new TCPResponseTask(incoming, BUFSIZE);
 
+                // Submit task to executor service
                 es.submit(task);
-
-
             }
         } catch (IOException e) {
             e.printStackTrace();

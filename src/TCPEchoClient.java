@@ -11,7 +11,7 @@ public class TCPEchoClient {
 
     public static final int MYPORT = 6000;
     public static final String MSG = "Ping!";
-    public static int TRANSFER_RATE = 1;
+    public static int TRANSFER_RATE = 2;
     public static int BUFSIZE = 1024;
 
 
