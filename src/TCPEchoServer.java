@@ -37,6 +37,7 @@ public class TCPEchoServer {
 
                 // Submit task to executor service
                 es.submit(task);
+
             }
         } catch (IOException e) {
             e.printStackTrace();

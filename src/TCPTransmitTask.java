@@ -64,6 +64,7 @@ public class TCPTransmitTask implements Runnable {
             Thread.sleep(1000 - (total - start));
         } catch (InterruptedException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
     }
