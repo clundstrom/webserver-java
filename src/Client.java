@@ -13,11 +13,11 @@ public class Client {
         Socket socket = new Socket();
 
         // Create local endpoint and bind to socket
-        SocketAddress local = new InetSocketAddress(6000);
+        SocketAddress local = new InetSocketAddress(6001);
         socket.bind(local);
 
         // Create endpoint
-        SocketAddress remote = new InetSocketAddress("192.168.1.113", 6000);
+        SocketAddress remote = new InetSocketAddress("192.168.1.113", 6001);
 
         socket.connect(remote, 100);
 
@@ -25,18 +25,21 @@ public class Client {
         for(int i=0; i < 10; i++){
             pw.println("Ping!");
         }
+        pw.flush();
+        socket.shutdownOutput();
 
-        int read;
 
         InputStream in = socket.getInputStream();
-
+        int read;
+        StringBuilder sr = new StringBuilder();
         while((read = in.read(buff)) != -1){
-            System.out.println(new String(buff, 0, read));
+            System.out.println((new String(buff, 0, read)));
             read = in.read(buff);
         }
 
-        pw.close();
+
         in.close();
+        pw.close();
         socket.close();
     }
 
