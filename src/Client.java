@@ -13,11 +13,11 @@ public class Client {
         Socket socket = new Socket();
 
         // Create local endpoint and bind to socket
-        SocketAddress local = new InetSocketAddress(6001);
+        SocketAddress local = new InetSocketAddress(6000);
         socket.bind(local);
 
         // Create endpoint
-        SocketAddress remote = new InetSocketAddress("192.168.1.113", 6001);
+        SocketAddress remote = new InetSocketAddress("192.168.1.113", 6000);
 
         socket.connect(remote, 100);
 
