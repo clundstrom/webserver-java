@@ -48,7 +48,7 @@ public class TCPEchoClient {
             socket.connect(remote, 10);
 
             // Create packet
-            TCPTransmitTask task = new TCPTransmitTask(socket,TRANSFER_RATE, MSG, logger);
+            TCPTransmitTask task = new TCPTransmitTask(socket, TRANSFER_RATE, MSG, logger);
 
             sendReceive(task);
 
@@ -67,6 +67,7 @@ public class TCPEchoClient {
         if (TRANSFER_RATE == 0) {
             task.run();
         } else {
+            // Create continuous execution of the TransmitTask.
             ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
             es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
         }
