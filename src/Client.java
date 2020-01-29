@@ -21,11 +21,11 @@ public class Client {
 
         socket.connect(remote, 100);
 
-        PrintWriter pw = new PrintWriter(socket.getOutputStream());
+
+        PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
         for(int i=0; i < 10; i++){
             pw.println("Ping!");
         }
-        pw.flush();
         socket.shutdownOutput();
 
 
