@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class TCPResponseTask implements Runnable {
 
@@ -15,8 +16,6 @@ public class TCPResponseTask implements Runnable {
 
     @Override
     public void run() {
-        long start = System.currentTimeMillis();
-        long total;
         try {
 
             // Read input
@@ -38,26 +37,9 @@ public class TCPResponseTask implements Runnable {
                 bytesRead = is.read(buf);
             }
 
-            // Keep track of time spent
-            total = System.currentTimeMillis() - start;
-
-            // If the time exceeds 1 second abort immediately
-            if (total >= 1000) {
-                System.exit(0);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Connection reset by client.");
         }
-
-        total = System.currentTimeMillis();
-
-        /* Wait until the full second has passed */
-        try {
-            Thread.sleep(999 - (total - start));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
     }
 
 }
