@@ -21,7 +21,6 @@ public class TCPResponseTask implements Runnable {
             // Read input
             InputStream is = socket.getInputStream();
             byte[] buf = new byte[buffSize];
-
             // Read into buffer
             int bytesRead = is.read(buf);
             System.out.println("Message received: " + new String(buf, 0 , bytesRead));
@@ -29,10 +28,8 @@ public class TCPResponseTask implements Runnable {
             // Create a Writer to the output-stream
             PrintWriter output = new PrintWriter(socket.getOutputStream());
 
-
             // Write to output while buffer is not empty
-
-            while(bytesRead != -1){
+            while(bytesRead != 0){
                 output.println(buf);
                 bytesRead = is.read(buf);
             }

@@ -34,7 +34,7 @@ public class TCPTransmitTask implements Runnable {
             PrintWriter output = new PrintWriter(socket.getOutputStream());
             InputStream is = socket.getInputStream();
 
-            // Process packages
+            // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
 
                 // Write to output
