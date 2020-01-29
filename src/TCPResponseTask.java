@@ -22,7 +22,7 @@ public class TCPResponseTask implements Runnable {
     @Override
     public void run() {
         try {
-
+            socket.setKeepAlive(true);
             // Make sure a buffer size is specified
             if (buffSize == 0) {
                 this.buffSize = socket.getReceiveBufferSize();
