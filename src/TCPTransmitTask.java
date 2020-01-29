@@ -40,9 +40,6 @@ public class TCPTransmitTask implements Runnable {
                 // Write to output
                 output.println(message);
                 logger.setSent(logger.getSent()+1);
-
-                // Receive input
-                int bytes = is.read(buf);
                 logger.setTotalReceived(logger.getTotalReceived() + 1);
 
                 // Keep track of time spent

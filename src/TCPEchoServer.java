@@ -23,6 +23,7 @@ public class TCPEchoServer {
 
             // Create ExecutorService with expandable thread-pool
             ExecutorService es = Executors.newCachedThreadPool();
+            System.out.println("Server online. Awaiting incoming connections..");
 
             while (true) {
                 // Accept incoming requests
@@ -32,6 +33,7 @@ public class TCPEchoServer {
                 System.out.println("Creating thread for incoming request: " + incoming.getInetAddress() + " " + incoming.getPort());
 
                 // Create separate thread for the task
+
                 TCPResponseTask task = new TCPResponseTask(incoming, BUFSIZE);
 
                 es.submit(task);

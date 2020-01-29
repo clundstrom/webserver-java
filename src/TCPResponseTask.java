@@ -1,13 +1,14 @@
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 
 public class TCPResponseTask implements Runnable {
 
-    private final int buffSize;
     private Socket socket;
+    private int buffSize;
 
     public TCPResponseTask(Socket socket, int buffSize) {
         this.socket = socket;
@@ -17,25 +18,26 @@ public class TCPResponseTask implements Runnable {
     @Override
     public void run() {
         try {
-
             // Read input
             InputStream is = socket.getInputStream();
-            byte[] buf = new byte[buffSize];
-            // Read into buffer
-            int bytesRead = is.read(buf);
-            System.out.println("Message received: " + new String(buf, 0 , bytesRead));
 
-            // Create a Writer to the output-stream
-            PrintWriter output = new PrintWriter(socket.getOutputStream());
+            byte[] buffer = new byte[buffSize];
+            int len = is.read(buffer);
 
-            // Write to output while buffer is not empty
-            while(bytesRead != 0){
-                output.println(buf);
-                bytesRead = is.read(buf);
+            OutputStream pw = socket.getOutputStream();
+
+            while (len != -1) {
+                pw.write(buffer, 0, len);
+                len = is.read(buffer);
             }
+            // Transfer input to output
+            //is.transferTo(socket.getOutputStream());
 
-        } catch (Exception e) {
+
+        } catch (SocketException e) {
             System.err.println("Connection reset by client.");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
