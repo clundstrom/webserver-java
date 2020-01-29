@@ -7,6 +7,7 @@ public class Client {
 
 
     public static void main(String[] args) throws IOException {
+        byte[] buff = new byte[1024];
 
         // Create socket
         Socket socket = new Socket();
@@ -20,13 +21,23 @@ public class Client {
 
         socket.connect(remote, 100);
 
-        InputStream is = socket.getInputStream();
         PrintWriter pw = new PrintWriter(socket.getOutputStream());
-        pw.println("Ping!");
+        for(int i=0; i < 10; i++){
+            pw.println("Ping!");
+        }
 
-        var bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        int read;
 
-        System.out.println(bufferedReader.readLine());
+        InputStream in = socket.getInputStream();
+
+        while((read = in.read(buff)) != -1){
+            System.out.println(new String(buff, 0, read));
+            read = in.read(buff);
+        }
+
+        pw.close();
+        in.close();
+        socket.close();
     }
 
 }
