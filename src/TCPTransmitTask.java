@@ -36,12 +36,12 @@ public class TCPTransmitTask implements Runnable {
             byte[] buf = new byte[buffSize];
 
             // Create a Writer to the output-stream
-            PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+            OutputStream output = socket.getOutputStream();
 
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
                 // Write to output
-                output.println(message);
+                output.write(buf);
                 logger.setSent(logger.getSent() + 1);
             }
             output.flush();
