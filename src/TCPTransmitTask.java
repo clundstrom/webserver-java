@@ -1,6 +1,5 @@
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketAddress;
 
 
 /**
@@ -32,6 +31,7 @@ public class TCPTransmitTask implements Runnable {
             // Create a Writer to the output-stream
             PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
             StringBuilder sr = new StringBuilder();
+
 
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {

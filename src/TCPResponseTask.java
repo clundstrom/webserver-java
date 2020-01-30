@@ -1,6 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -27,30 +27,17 @@ public class TCPResponseTask implements Runnable {
             if (buffSize == 0) {
                 this.buffSize = socket.getReceiveBufferSize();
             }
+            var buf = new byte[buffSize];
 
             // Read input
             InputStream is = socket.getInputStream();
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            int read;
+            while((read = is.read(buf)) != -1){
+                out.println(new String(buf, 0, read));
+                System.out.println("Response: " + new String(buf, 0, read));
+            }
 
-            is.transferTo(socket.getOutputStream());
-
-//            // Create buffer
-//            byte[] buf = new byte[buffSize];
-//
-//
-//
-//            // Create output-stream
-//            OutputStream os = socket.getOutputStream();
-//
-//
-//            // Read input
-//            int bytesRead;
-//
-//            // Write to output as long as there are bytes to read
-//            while ((bytesRead = is.read(buf)) != -1) {
-//                os.write(buf, 0, bytesRead);
-//                bytesRead = is.read(buf);
-//            }
-//            socket.shutdownOutput();
 
 
         } catch (SocketException e) {

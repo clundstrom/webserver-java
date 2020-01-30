@@ -62,7 +62,6 @@ public class TCPEchoClient {
             int read;
             while((read = in.read(buf)) != -1){
                 System.out.println((new String(buf, 0, read)));
-                read = in.read(buf);
                 logger.setTotalReceived(logger.getTotalReceived() + 1);
             }
 
