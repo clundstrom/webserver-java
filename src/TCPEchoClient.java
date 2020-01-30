@@ -63,7 +63,7 @@ public class TCPEchoClient {
             int read;
             while((read = in.read(buf)) != -1){
 
-                logger.setTotalReceived(logger.getTotalReceived() + 1);
+                logger.setReceived(logger.getReceived() + 1);
                 // Print current state of logger.
                 System.out.println(logger);
             }
@@ -104,7 +104,7 @@ public class TCPEchoClient {
 
         // Special case, run once.
         if (TRANSFER_RATE == 0) {
-            es.submit(task);
+            es.execute(task);
         } else {
             es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
         }

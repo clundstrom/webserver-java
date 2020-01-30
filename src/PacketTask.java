@@ -41,7 +41,7 @@ public class PacketTask implements Runnable {
 
                 // Update total packets to logger.
                 logger.setSent(logger.getSent() + 1);
-                logger.setTotalReceived(logger.getTotalReceived() + 1);
+                logger.setReceived(logger.getReceived() + 1);
 
             } catch (IOException e) {
                 System.err.println("There was an error while sending or receiving packets.");

@@ -21,11 +21,11 @@ public class Logger {
         this.totalSent = sent;
     }
 
-    public long getTotalReceived() {
+    public long getReceived() {
         return totalReceived;
     }
 
-    public synchronized void setTotalReceived(long totalReceived) {
+    public synchronized void setReceived(long totalReceived) {
         this.totalReceived = totalReceived;
     }
 

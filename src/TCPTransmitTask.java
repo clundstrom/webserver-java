@@ -43,6 +43,7 @@ public class TCPTransmitTask implements Runnable {
                 // Write to output
                 output.write(buf);
                 logger.setSent(logger.getSent() + 1);
+                logger.setReceived(logger.getReceived() + 1);
             }
             output.flush();
 
