@@ -24,6 +24,10 @@ public class TCPEchoClient {
         // Parse buffer-size
         if (args.length >= 3) {
             BUFSIZE = ArgParser.tryParse(args[2]);
+            if(BUFSIZE < 1) {
+                System.err.println("Buffer size not allowed. Exiting..");
+                System.exit(1);
+            }
         }
 
         // Parse transfer-rate

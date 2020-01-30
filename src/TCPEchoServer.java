@@ -13,12 +13,16 @@ public class TCPEchoServer {
 
             // Parse PORT
             if (args.length >= 1) {
-                BUFSIZE = ArgParser.tryParse(args[0]);
+                MYPORT = ArgParser.tryParse(args[0]);
             }
 
             // Parse buffer-size
             if (args.length >= 1) {
                 BUFSIZE = ArgParser.tryParse(args[1]);
+                if(BUFSIZE < 1) {
+                    System.err.println("Buffer size not allowed. Exiting..");
+                    System.exit(1);
+                }
             }
 
             // Create server socket and bind to port.
