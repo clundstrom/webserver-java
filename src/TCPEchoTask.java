@@ -33,13 +33,13 @@ public class TCPEchoTask implements Runnable {
             var buf = new byte[buffSize];
 
             InputStream is = socket.getInputStream();
-            OutputStream out = socket.getOutputStream();
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
             // Read input
             int read;
             while((read = is.read(buf)) != -1){
                 // Echo back what is read
-                out.write(buf);
+                out.println(new String(buf, 0,read));
             }
             out.flush();
 
