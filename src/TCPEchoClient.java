@@ -48,7 +48,7 @@ public class TCPEchoClient {
             Logger logger = new Logger();
 
             // Connect to remote, set conn timeout to 10sec
-            socket.connect(remote, 10);
+            socket.connect(remote, 10000);
 
             // Create transmission task
             TCPTransmitTask task = new TCPTransmitTask(socket, TRANSFER_RATE, MSG, logger, BUFSIZE);

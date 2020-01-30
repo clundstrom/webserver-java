@@ -17,10 +17,9 @@ public class Client {
         socket.bind(local);
 
         // Create endpoint
-        SocketAddress remote = new InetSocketAddress("192.168.1.113", 6000);
+        SocketAddress remote = new InetSocketAddress("85.228.177.237", 6000);
 
         socket.connect(remote, 100);
-
 
         PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
         for(int i=0; i < 10; i++){
