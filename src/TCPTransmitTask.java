@@ -52,8 +52,6 @@ public class TCPTransmitTask implements Runnable {
                 System.exit(0);
                 Thread.currentThread().interrupt();
             }
-            // Print current state of logger.
-            System.out.println(logger);
         }
         catch (SocketException e){
             System.err.println("Connection to server lost.");

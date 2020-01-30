@@ -1,6 +1,4 @@
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,10 +35,19 @@ public class TCPEchoServer {
 
                 // Submit task to executor service
                 es.submit(task);
-
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        catch (BindException e){
+            System.err.println("Could not bind to port " + MYPORT);
+        }
+        catch (IllegalArgumentException e){
+            System.err.println("Illegal argument. Allowed port range 0-65535");
+        }
+        catch (SecurityException e ){
+            System.err.println("Action not allowed.");
+        }
+        catch (IOException e) {
+            System.err.println("Could not bind to port.");
         }
     }
 }

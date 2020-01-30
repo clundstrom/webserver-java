@@ -67,6 +67,9 @@ public class TCPEchoClient {
             while((read = in.read(buf)) != -1){
                 System.out.println((new String(buf, 0, read)));
                 logger.setTotalReceived(logger.getTotalReceived() + 1);
+
+                // Print current state of logger.
+                System.out.println(logger);
             }
 
             // Close streams and socket when there is nothing to read or server terminates.
