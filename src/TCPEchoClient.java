@@ -55,8 +55,24 @@ public class TCPEchoClient {
 
             sendReceive(task);
 
+
+            // Open input socket
+            InputStream in = socket.getInputStream();
+
+            int read;
+            while((read = in.read(buf)) != -1){
+                System.out.println((new String(buf, 0, read)));
+                read = in.read(buf);
+                logger.setTotalReceived(logger.getTotalReceived() + 1);
+            }
+
+            // Close streams and socket
+            in.close();
+            socket.close();
+
         } catch (IOException e) {
             e.printStackTrace();
+
         }
 
     }

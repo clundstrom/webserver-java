@@ -35,47 +35,30 @@ public class TCPTransmitTask implements Runnable {
 
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
-                output.println(message);
+
+                sr.append(message);
                 logger.setSent(logger.getSent() + 1);
             }
-                // Write to output
-                //output.println(sr.toString());
-                output.flush();
+            // Write to output
+            output.println(sr.toString());
+            output.flush();
 
-                // Shutdown output to allow for input
-                socket.shutdownOutput();
+            // Shutdown output to allow for input
+            //socket.shutdownOutput();
 
+            //socket.shutdownInput();
 
+            // Keep track of time spent
+            total = System.currentTimeMillis() - start;
 
-
-                // Open input socket
-                InputStream in = socket.getInputStream();
-
-                int read;
-                while((read = in.read(buf)) != -1){
-                    System.out.println((new String(buf, 0, read)));
-                    read = in.read(buf);
-                }
-                socket.shutdownInput();
-
-                logger.setTotalReceived(logger.getTotalReceived() + 1);
-
-                // Keep track of time spent
-                total = System.currentTimeMillis() - start;
-
-                // If the time exceeds 1 second abort immediately
-                if (total >= 999) {
-                    System.out.println(logger.toString());
-                    System.exit(0);
-                    Thread.currentThread().interrupt();
-                }
+            // If the time exceeds 1 second abort immediately
+            if (total >= 999) {
+                System.out.println(logger.toString());
+                System.exit(0);
+                Thread.currentThread().interrupt();
+            }
 
             System.out.println(logger);
-
-            // Close streams and socket
-            output.close();
-            in.close();
-            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
