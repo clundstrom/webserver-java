@@ -51,7 +51,6 @@ public class TCPTransmitTask implements Runnable {
 
             // If the time exceeds 1 second abort immediately
             if (total >= 999) {
-                System.out.println(logger.toString());
                 System.exit(0);
                 Thread.currentThread().interrupt();
             }

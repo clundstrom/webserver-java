@@ -4,17 +4,17 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 
-public class TCPResponseTask implements Runnable {
+public class TCPEchoTask implements Runnable {
 
     private Socket socket;
     private int buffSize;
 
-    public TCPResponseTask(Socket socket, int buffSize) {
+    public TCPEchoTask(Socket socket, int buffSize) {
         this.socket = socket;
         this.buffSize = buffSize;
     }
 
-    public TCPResponseTask(Socket socket) {
+    public TCPEchoTask(Socket socket) {
         this.socket = socket;
         this.buffSize = 0;
     }
@@ -32,17 +32,14 @@ public class TCPResponseTask implements Runnable {
             var buf = new byte[buffSize];
 
             InputStream is = socket.getInputStream();
-
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
             // Read input
             int read;
             while((read = is.read(buf)) != -1){
+                // Echo back what is read
                 out.println(new String(buf, 0, read));
-                System.out.println("Response: " + new String(buf, 0, read));
             }
-
-
 
         } catch (SocketException e) {
             System.err.println("Connection reset by client. Terminating thread." + Thread.currentThread().getName());
