@@ -65,11 +65,8 @@ public class TCPTransmitTask implements Runnable {
             stopSchedule();
         }
 
-
-
         // Print current state of logger.
         System.out.println(logger);
-
 
         /* Wait until the full second has passed before terminating thread*/
         total = System.currentTimeMillis();
@@ -81,6 +78,11 @@ public class TCPTransmitTask implements Runnable {
         }
     }
 
+    /**
+     * Parses message to specified buffer size.
+     * @param message String to parse.
+     * @return Byte array with parsed message.
+     */
     private byte[] parseToBuffer(String message) {
         byte[] bytes = message.getBytes();
         byte[] buff = new byte[buffSize];
