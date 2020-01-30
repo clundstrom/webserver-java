@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.concurrent.ScheduledExecutorService;
 
 
 /**
@@ -12,6 +14,7 @@ public class TCPTransmitTask implements Runnable {
     private Logger logger;
     private String message;
     private int buffSize;
+    ScheduledExecutorService es;
 
     public TCPTransmitTask(Socket socket, int nrOfPackets, String message, Logger logger, int buffSize) {
         this.socket = socket;
@@ -30,23 +33,15 @@ public class TCPTransmitTask implements Runnable {
             byte[] buf = new byte[buffSize];
             // Create a Writer to the output-stream
             PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
-            StringBuilder sr = new StringBuilder();
 
 
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
-
-                sr.append(message);
+                // Write to output
+                output.println(message);
                 logger.setSent(logger.getSent() + 1);
             }
-            // Write to output
-            output.println(sr.toString());
             output.flush();
-
-            // Shutdown output to allow for input
-            //socket.shutdownOutput();
-
-            //socket.shutdownInput();
 
             // Keep track of time spent
             total = System.currentTimeMillis() - start;
@@ -57,21 +52,39 @@ public class TCPTransmitTask implements Runnable {
                 System.exit(0);
                 Thread.currentThread().interrupt();
             }
-
+            // Print current state of logger.
             System.out.println(logger);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
+        catch (SocketException e){
+            System.err.println("Connection to server lost.");
+            stopSchedule();
+        }
+        catch (IOException e) {
+            System.err.println("There was an error writing to or reading from stream.");
+            stopSchedule();
+        }
 
         /* Wait until the full second has passed before terminating thread*/
         total = System.currentTimeMillis();
         try {
             Thread.sleep(1000 - (total - start));
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            stopSchedule();
         }
-
     }
 
+    /**
+     * Attaches scheduler to task for termination.
+     * @param es ScheduledExecutorService
+     */
+    public void attachScheduler(ScheduledExecutorService es) {
+        this.es = es;
+    }
+
+    /**
+     * Stops continuous scheduling of transmission tasks if server connection is lost.
+     */
+    public void stopSchedule(){
+        this.es.shutdownNow();
+    }
 }
