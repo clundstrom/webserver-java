@@ -1,9 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
+import java.net.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -65,9 +62,8 @@ public class TCPEchoClient {
             // Continuously read from input stream
             int read;
             while((read = in.read(buf)) != -1){
-                System.out.println((new String(buf, 0, read)));
-                logger.setTotalReceived(logger.getTotalReceived() + 1);
 
+                logger.setTotalReceived(logger.getTotalReceived() + 1);
                 // Print current state of logger.
                 System.out.println(logger);
             }
@@ -79,6 +75,18 @@ public class TCPEchoClient {
         catch (ConnectException e){
             System.err.println("Could not connect to host.");
         }
+        catch (BindException e){
+            System.err.println("Could not bind to port " + MYPORT);
+        }
+        catch (UnknownHostException e){
+            System.err.println("Could not resolve host.");
+        }
+        catch (NullPointerException e){
+            System.err.println("Address can not be null.");
+        }
+        catch (IllegalArgumentException e){
+            System.err.println("Illegal argument. Allowed port range 0-65535");
+        }
         catch (IOException e) {
             System.err.println("There was an error reading or writing to stream.");
         }
@@ -89,9 +97,11 @@ public class TCPEchoClient {
      * @param task Custom task which sends and receives packages.
      */
     private static void scheduleTask(TCPTransmitTask task) {
+
         // Create continuous execution of the task.
         ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
         task.attachScheduler(es);
+
         // Special case, run once.
         if (TRANSFER_RATE == 0) {
             es.submit(task);

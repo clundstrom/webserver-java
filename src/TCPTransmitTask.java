@@ -29,11 +29,14 @@ public class TCPTransmitTask implements Runnable {
     public void run() {
         long start = System.currentTimeMillis();
         long total;
+
         try {
+
+            // Create buffer
             byte[] buf = new byte[buffSize];
+
             // Create a Writer to the output-stream
             PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
-
 
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
@@ -67,7 +70,8 @@ public class TCPTransmitTask implements Runnable {
         try {
             Thread.sleep(1000 - (total - start));
         } catch (InterruptedException e) {
-            stopSchedule();
+            // Interrupt thread
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -80,7 +84,7 @@ public class TCPTransmitTask implements Runnable {
     }
 
     /**
-     * Stops continuous scheduling of transmission tasks if server connection is lost.
+     * Stops continuous scheduling of transmission tasks.
      */
     public void stopSchedule(){
         this.es.shutdownNow();

@@ -22,16 +22,20 @@ public class TCPResponseTask implements Runnable {
     @Override
     public void run() {
         try {
-            socket.setKeepAlive(true);
+
             // Make sure a buffer size is specified
-            if (buffSize == 0) {
+            if (buffSize <= 0) {
                 this.buffSize = socket.getReceiveBufferSize();
             }
+
+            // Create buffer
             var buf = new byte[buffSize];
 
-            // Read input
             InputStream is = socket.getInputStream();
+
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            // Read input
             int read;
             while((read = is.read(buf)) != -1){
                 out.println(new String(buf, 0, read));
@@ -41,7 +45,7 @@ public class TCPResponseTask implements Runnable {
 
 
         } catch (SocketException e) {
-            System.err.println("Connection reset by client. Terminating thread.");
+            System.err.println("Connection reset by client. Terminating thread." + Thread.currentThread().getName());
         } catch (IOException e) {
             System.err.println("There was an error writing or reading from the stream.");
         }
