@@ -33,15 +33,15 @@ public class TCPTransmitTask implements Runnable {
         try {
 
             // Create buffer
-            byte[] buf = new byte[buffSize];
+            byte[] buf = parseToBuffer(message);
 
             // Create a Writer to the output-stream
-            PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+            OutputStream output = socket.getOutputStream();
 
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
                 // Write to output
-                output.write(message);
+                output.write(buf, 0 , buf.length);
                 logger.setSent(logger.getSent() + 1);
                 logger.setReceived(logger.getReceived() + 1);
             }
@@ -79,6 +79,20 @@ public class TCPTransmitTask implements Runnable {
             // Interrupt thread
             Thread.currentThread().interrupt();
         }
+    }
+
+    private byte[] parseToBuffer(String message) {
+        byte[] bytes = message.getBytes();
+        byte[] buff = new byte[buffSize];
+
+        for(int i=0; i < message.length(); i++){
+            if(i == buff.length){
+                System.err.println("Could not parse the complete message. (Buff size: " + buff.length + " Message: " + message.length() + ")");
+                return buff;
+            }
+            buff[i] = bytes[i];
+        }
+        return buff;
     }
 
     /**

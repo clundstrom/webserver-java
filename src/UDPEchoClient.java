@@ -27,6 +27,11 @@ public class UDPEchoClient {
         // Parse buffer-size
         if (args.length >= 3) {
             BUFSIZE = ArgParser.tryParse(args[2]);
+            if (BUFSIZE < MSG.getBytes().length){
+                // TODO: something
+                System.err.println("Something something");
+            }
+
         }
 
         // Parse transfer rate
