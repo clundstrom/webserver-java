@@ -5,15 +5,20 @@ import java.util.concurrent.Executors;
 
 public class TCPEchoServer {
 
-    public static final int MYPORT = 6000;
+    public static int MYPORT = 6000;
     public static int BUFSIZE = 1024;
 
     public static void main(String[] args) {
         try {
 
-            // Parse buffer-size
+            // Parse PORT
             if (args.length >= 1) {
                 BUFSIZE = ArgParser.tryParse(args[0]);
+            }
+
+            // Parse buffer-size
+            if (args.length >= 1) {
+                BUFSIZE = ArgParser.tryParse(args[1]);
             }
 
             // Create server socket and bind to port.
@@ -44,7 +49,7 @@ public class TCPEchoServer {
             System.err.println("Illegal argument. Allowed port range 0-65535");
         }
         catch (SecurityException e ){
-            System.err.println("Action not allowed.");
+            System.err.println("Security: Action not allowed.");
         }
         catch (IOException e) {
             System.err.println("Could not bind to port.");

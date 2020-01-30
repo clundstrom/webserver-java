@@ -62,10 +62,7 @@ public class TCPEchoClient {
             // Continuously read from input stream
             int read;
             while((read = in.read(buf)) != -1){
-
-                logger.setReceived(logger.getReceived() + 1);
-                // Print current state of logger.
-                System.out.println(logger);
+                System.out.println(new String(buf, 0, read));
             }
 
             // Close streams and socket when there is nothing to read or server terminates.

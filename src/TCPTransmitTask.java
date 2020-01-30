@@ -36,12 +36,12 @@ public class TCPTransmitTask implements Runnable {
             byte[] buf = new byte[buffSize];
 
             // Create a Writer to the output-stream
-            OutputStream output = socket.getOutputStream();
+            PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
 
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
                 // Write to output
-                output.write(buf);
+                output.write(message);
                 logger.setSent(logger.getSent() + 1);
                 logger.setReceived(logger.getReceived() + 1);
             }
@@ -64,6 +64,12 @@ public class TCPTransmitTask implements Runnable {
             System.err.println("There was an error writing to or reading from stream.");
             stopSchedule();
         }
+
+
+
+        // Print current state of logger.
+        System.out.println(logger);
+
 
         /* Wait until the full second has passed before terminating thread*/
         total = System.currentTimeMillis();
