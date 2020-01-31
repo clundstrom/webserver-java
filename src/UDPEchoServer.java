@@ -17,7 +17,7 @@ public class UDPEchoServer {
         byte[] buf = new byte[BUFSIZE];
 
         // Parse buffer-size
-        if (args.length >= 3) {
+        if (args.length >= 1) {
             buf = new byte[ArgParser.tryParse(args[0])];
         }
 
