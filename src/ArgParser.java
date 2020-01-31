@@ -1,12 +1,17 @@
 public class ArgParser {
 
 
+    /**
+     * Parses arguments to integer values.
+     * @param i String("123")
+     * @return Int(123)
+     */
     static int tryParse(String i){
         try{
             return Integer.parseInt(i);
         }
         catch (NumberFormatException e){
-            System.err.print("There was an error parsing command line arguments.");
+            System.err.println("There was an error parsing command line arguments.");
             System.exit(1);
         }
 
