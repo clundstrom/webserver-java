@@ -47,13 +47,6 @@ public class UDPSendReceiveTask implements Runnable {
                 logger.setSent(logger.getSent() + 1);
                 logger.setReceived(logger.getReceived() + 1);
 
-            } catch (SocketTimeoutException e) {
-                System.err.println("Address can not be null.");
-                stopScheduleAndExit();
-            } catch (PortUnreachableException e) {
-                System.err.println("Port unreachable. Aborting..");
-                stopScheduleAndExit();
-
             } catch (IOException e) {
                 System.err.println("There was an error while sending or receiving packets.");
                 stopScheduleAndExit();

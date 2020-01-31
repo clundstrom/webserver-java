@@ -12,7 +12,7 @@ public class UDPEchoClient {
 
 
     // Enabling debug will show a live feed of sent and received packets and their size. Not suitable for high rates.
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
 
     public static void main(String[] args) {
         // Handle mandatory arguments
@@ -71,14 +71,13 @@ public class UDPEchoClient {
 
         } catch (BindException e) {
             System.err.println("Could not bind to port " + MYPORT);
-        } catch (PortUnreachableException e) {
-            System.err.println("Could not reach port." + MYPORT);
-            System.exit(1);
         } catch (NullPointerException e) {
             System.err.println("Address can not be null.");
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             System.err.println("Illegal argument. Is IP correctly formatted? Allowed port range 0-65535");
-        } catch (IOException e) {
+        }
+        catch (SocketException e){
             System.err.println("There was an error establishing a connection.");
             System.exit(1);
         }
