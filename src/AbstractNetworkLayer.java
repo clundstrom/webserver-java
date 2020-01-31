@@ -8,10 +8,11 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractNetworkLayer {
 
-
-    public static int MYPORT = 6000;
-    public static String MSG = "An echo message!";
     public static int BUFSIZE = 1024;
+    public static int MYPORT = 6000;
+
+    // TODO: Check what variables can be kept
+    public static String MSG = "An echo message!";
     public static int TRANSFER_RATE = 0;
 
     // Enabling debug will show a live feed of sent and received packets and their size. Not suitable for high rates.
@@ -42,14 +43,4 @@ public abstract class AbstractNetworkLayer {
             es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
         }
     }
-
-
-    static void sleepTask(long start, long end){
-
-
-
-    }
-
-
-
 }

@@ -8,7 +8,7 @@ public class Logger {
     private volatile long totalSent = 0;
     private volatile long totalReceived = 0;
     private volatile long remaining = 0;
-    private boolean DEBUG = true;
+    private boolean DEBUG;
 
     Logger(boolean debug){
         this.DEBUG = debug;
@@ -20,7 +20,7 @@ public class Logger {
 
     }
 
-    public long getSent() {
+    public synchronized long getSent() {
         return totalSent;
     }
 
@@ -28,7 +28,7 @@ public class Logger {
         this.totalSent = sent;
     }
 
-    public long getReceived() {
+    public synchronized long getReceived() {
         return totalReceived;
     }
 
@@ -36,7 +36,7 @@ public class Logger {
         this.totalReceived = totalReceived;
     }
 
-    public void setRemaining(long remaining) {
+    public synchronized void setRemaining(long remaining) {
         this.remaining = remaining;
     }
 
