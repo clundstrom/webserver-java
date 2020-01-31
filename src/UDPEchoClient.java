@@ -14,8 +14,8 @@ public class UDPEchoClient {
     public static int TRANSFER_RATE = 1;
 
 
-    // Enabling debug will show individual packets and their size. Not suitable for high rates.
-    public static final boolean DEBUG = false;
+    // Enabling debug will show a live feed of sent and received packets and their size. Not suitable for high rates.
+    public static final boolean DEBUG = true;
 
     public static void main(String[] args) {
         // Handle mandatory arguments
@@ -27,11 +27,14 @@ public class UDPEchoClient {
         // Parse buffer-size
         if (args.length >= 3) {
             BUFSIZE = ArgParser.tryParse(args[2]);
-            if (BUFSIZE < MSG.getBytes().length){
-                // TODO: something
-                System.err.println("Something something");
+            if(BUFSIZE < 1) {
+                System.err.println("Buffer size not allowed. Exiting..");
+                System.exit(1);
             }
 
+            if (BUFSIZE < MSG.getBytes().length){
+                System.err.println("Warning, buffer too small for message.");
+            }
         }
 
         // Parse transfer rate
@@ -40,7 +43,7 @@ public class UDPEchoClient {
         }
 
         try {
-            byte[] buf = new byte[BUFSIZE];
+            byte[] buf = ArgParser.parseToBuffer(MSG, BUFSIZE);
 
             // Create socket
             DatagramSocket socket = new DatagramSocket(null);
@@ -53,9 +56,7 @@ public class UDPEchoClient {
             SocketAddress remoteBindPoint = new InetSocketAddress(args[0], ArgParser.tryParse(args[1]));
 
             // Create datagram packet for sending message
-            DatagramPacket sendPacket = new DatagramPacket(MSG.getBytes(),
-                    MSG.length(),
-                    remoteBindPoint);
+            DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, remoteBindPoint);
 
             // Create datagram packet for receiving echoed message
             DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
@@ -82,8 +83,9 @@ public class UDPEchoClient {
      * @param task Custom task which sends and receives packages.
      */
     private static void sendReceive(PacketTask task) {
-        // Special case, run once.
+        // Special case, send once.
         if (TRANSFER_RATE == 0) {
+            task.setNrOfPackets(1);
             task.run();
         } else {
             ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);

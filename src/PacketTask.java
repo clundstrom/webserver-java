@@ -48,16 +48,15 @@ public class PacketTask implements Runnable {
             }
 
             /* Compare sent and received message */
-            String receivedString =
-                    new String(received.getData(),
-                            received.getOffset(),
-                            received.getLength());
-            if (receivedString.compareTo(message) == 0){
+            String receivedString = new String(received.getData(), received.getOffset(), received.getLength());
+
+            if (receivedString.compareTo(new String(sent.getData(), sent.getOffset(), sent.getLength())) == 0){
                 if(DEBUG)
-                    System.out.printf("%d bytes sent and received\n", received.getLength());
+                    System.out.printf("Sent/Rec: %d, %d bytes\n",sent.getLength(), received.getLength());
             }
             else{
-                System.out.print("Sent and received msg not equal!\n");
+                if(DEBUG)
+                    System.err.printf("Warning: Sent/Rec: %d, %d bytes\n",sent.getLength(), received.getLength());
             }
 
             total = System.currentTimeMillis()-start;
@@ -79,6 +78,10 @@ public class PacketTask implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setNrOfPackets(int i){
+        this.nrOfPackets = i;
     }
 
     public void setDebug(boolean debug) {

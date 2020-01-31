@@ -33,7 +33,7 @@ public class TCPTransmitTask implements Runnable {
         try {
 
             // Create buffer
-            byte[] buf = parseToBuffer(message);
+            byte[] buf = ArgParser.parseToBuffer(message, buffSize);
 
             // Create a Writer to the output-stream
             OutputStream output = socket.getOutputStream();
@@ -76,25 +76,6 @@ public class TCPTransmitTask implements Runnable {
             // Interrupt thread
             Thread.currentThread().interrupt();
         }
-    }
-
-    /**
-     * Parses message to specified buffer size.
-     * @param message String to parse.
-     * @return Byte array with parsed message.
-     */
-    private byte[] parseToBuffer(String message) {
-        byte[] bytes = message.getBytes();
-        byte[] buff = new byte[buffSize];
-
-        for(int i=0; i < message.length(); i++){
-            if(i == buff.length){
-                System.err.println("Could not parse the complete message. (Buff size: " + buff.length + " Message: " + message.length() + ")");
-                return buff;
-            }
-            buff[i] = bytes[i];
-        }
-        return buff;
     }
 
     /**
