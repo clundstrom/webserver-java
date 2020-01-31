@@ -98,6 +98,8 @@ public class UDPEchoClient {
         } else {
             ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
             task.attachScheduler(es);
+
+            // Run task each second
             es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
         }
     }
