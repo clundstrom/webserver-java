@@ -24,7 +24,6 @@ public class TCPTransmitTask implements IEchoTask {
         this.buffSize = buffSize;
     }
 
-
     @Override
     public void run() {
         long start = System.currentTimeMillis();
@@ -70,12 +69,8 @@ public class TCPTransmitTask implements IEchoTask {
 
         /* Wait until the full second has passed before terminating thread*/
         total = System.currentTimeMillis();
-        try {
-            Thread.sleep(1000 - (total - start));
-        } catch (InterruptedException e) {
-            // Interrupt thread
-            Thread.currentThread().interrupt();
-        }
+
+        sleepTask(total, start);
     }
 
 
@@ -89,11 +84,29 @@ public class TCPTransmitTask implements IEchoTask {
 
 
     /**
+     * Wait until the full second has passed before terminating thread
+     * @param total
+     * @param start
+     */
+    @Override
+    public void sleepTask(long total, long start){
+        try {
+            Thread.sleep(1000 - (total - start));
+        } catch (InterruptedException e) {
+            // Interrupt thread
+            Thread.currentThread().interrupt();
+        }
+    }
+
+
+
+    /**
      * Stops continuous scheduling of transmission tasks.
      */
     public void stopSchedule(){
         this.es.shutdownNow();
     }
+
 
     @Override
     public void setNrOfPackets(int i) {

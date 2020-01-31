@@ -40,19 +40,6 @@ public class Logger {
         this.remaining = remaining;
     }
 
-    public long getRemaining() {
-        return remaining;
-    }
-
-    public boolean isDebug() {
-        return DEBUG;
-    }
-
-    public void setDEBUG(boolean DEBUG) {
-        this.DEBUG = DEBUG;
-    }
-
-
     /**
      * Prints a comparison between two packets if DEBUG is enabled for logger.
      */

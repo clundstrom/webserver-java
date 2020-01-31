@@ -18,6 +18,7 @@ public class ArgParser {
         return 0;
     }
 
+
     /**
      * Parses message to specified buffer size.
      * @param message String to parse.

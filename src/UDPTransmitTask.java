@@ -8,22 +8,20 @@ import java.util.concurrent.ScheduledExecutorService;
  * Class that represents a task which will send and receive packets at a specified TRANSFER RATE.
  * Includes a logger which keeps track of amount of packages sent and received, also if packages are lost.
  */
-public class UDPSendReceiveTask implements IEchoTask {
+public class UDPTransmitTask implements IEchoTask {
 
     private DatagramSocket socket;
     private DatagramPacket sent;
     private DatagramPacket received;
     private int nrOfPackets;
-    private String message;
     private Logger logger;
     private ScheduledExecutorService es;
 
-    public UDPSendReceiveTask(DatagramSocket socket, DatagramPacket sent, DatagramPacket received, String message, int nrOfPackets, Logger logger) {
+    public UDPTransmitTask(DatagramSocket socket, DatagramPacket sent, DatagramPacket received, int nrOfPackets, Logger logger) {
         this.socket = socket;
         this.sent = sent;
         this.received = received;
         this.nrOfPackets = nrOfPackets;
-        this.message = message;
         this.logger = logger;
     }
 
@@ -66,11 +64,7 @@ public class UDPSendReceiveTask implements IEchoTask {
 
 
         /* Wait until the full second has passed */
-        try {
-            Thread.sleep(1000 - (total - start));
-        } catch (InterruptedException e) {
-            System.err.println("Task timeout.");
-        }
+        sleepTask(total, start);
     }
 
     @Override
@@ -101,5 +95,15 @@ public class UDPSendReceiveTask implements IEchoTask {
     public void stopScheduleAndExit(){
         this.es.shutdownNow();
         System.exit(1);
+    }
+
+
+    @Override
+    public void sleepTask(long total, long start){
+        try {
+            Thread.sleep(1000 - (total - start));
+        } catch (InterruptedException e) {
+            System.err.println("Task timeout.");
+        }
     }
 }
