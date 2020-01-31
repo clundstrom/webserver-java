@@ -15,7 +15,7 @@ public abstract class AbstractNetworkLayer {
     public static int TRANSFER_RATE = 0;
 
     // Enabling debug will show a live feed of sent and received packets and their size. Not suitable for high rates.
-    public static boolean DEBUG;
+    public static boolean DEBUG = true;
 
 
     public AbstractNetworkLayer(){
