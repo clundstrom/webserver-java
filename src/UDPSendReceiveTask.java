@@ -71,10 +71,10 @@ public class UDPSendReceiveTask implements Runnable {
 
             total = System.currentTimeMillis() - start;
 
-            if (total >= 1000) {
+            if (total >= 999) {
                 logger.setRemaining(nrOfPackets - i - 1);
                 System.out.println(logger.toString());
-                System.exit(0);
+                return;
             }
             logger.setRemaining(nrOfPackets - i - 1);
         }

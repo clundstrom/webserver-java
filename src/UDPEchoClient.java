@@ -17,7 +17,7 @@ public class UDPEchoClient {
     public static void main(String[] args) {
         // Handle mandatory arguments
         if (args.length < 2) {
-            System.err.println("Error: Specify arguments server_name port (buffer-size) (transfer-rate) ");
+            System.err.println("Error: Specify arguments server_name port (buffer-size) (transfer-rate)");
             System.exit(1);
         }
 
