@@ -7,7 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  * Class which represents a TCP transmission Task.
  */
-public class TCPTransmitTask implements Runnable {
+public class TCPTransmitTask implements IEchoTask {
 
     private Socket socket;
     private int nrOfPackets;
@@ -78,6 +78,7 @@ public class TCPTransmitTask implements Runnable {
         }
     }
 
+
     /**
      * Attaches scheduler to task for termination.
      * @param es ScheduledExecutorService
@@ -86,10 +87,16 @@ public class TCPTransmitTask implements Runnable {
         this.es = es;
     }
 
+
     /**
      * Stops continuous scheduling of transmission tasks.
      */
     public void stopSchedule(){
         this.es.shutdownNow();
+    }
+
+    @Override
+    public void setNrOfPackets(int i) {
+        this.nrOfPackets = i;
     }
 }

@@ -1,18 +1,14 @@
-import java.io.IOException;
 import java.net.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-public class UDPEchoClient {
-    public static final int MYPORT = 6000;
-    public static final String MSG = "An Echo Message!";
-    public static int BUFSIZE = 1024;
-    public static int TRANSFER_RATE = 1;
+public class UDPEchoClient extends AbstractNetworkLayer {
 
-
-    // Enabling debug will show a live feed of sent and received packets and their size. Not suitable for high rates.
-    public static final boolean DEBUG = true;
+    public UDPEchoClient(int myport, String message, int bufferSize, int transferRate, boolean debug){
+        MYPORT = myport;
+        MSG = message;
+        BUFSIZE = bufferSize;
+        TRANSFER_RATE = transferRate;
+        DEBUG = debug;
+    }
 
     public static void main(String[] args) {
         // Handle mandatory arguments
@@ -59,15 +55,13 @@ public class UDPEchoClient {
             DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
 
             // Create packet logger
-            Logger logger = new Logger();
+            Logger logger = new Logger(DEBUG);
 
             // Create packet-task
             UDPSendReceiveTask task = new UDPSendReceiveTask(socket, sendPacket, receivePacket, MSG, TRANSFER_RATE, logger);
-            task.setDebug(DEBUG);
-
 
             // Send and receive message
-            sendReceive(task);
+            scheduleTask(task);
 
         } catch (BindException e) {
             System.err.println("Could not bind to port " + MYPORT);
@@ -80,26 +74,6 @@ public class UDPEchoClient {
         catch (SocketException e){
             System.err.println("There was an error establishing a connection.");
             System.exit(1);
-        }
-    }
-
-
-    /**
-     * Function which handles package scheduling for the client.
-     *
-     * @param task Custom task which sends and receives packages.
-     */
-    private static void sendReceive(UDPSendReceiveTask task) {
-        // Special case, send once.
-        if (TRANSFER_RATE == 0) {
-            task.setNrOfPackets(1);
-            task.run();
-        } else {
-            ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
-            task.attachScheduler(es);
-
-            // Run task each second
-            es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
         }
     }
 }

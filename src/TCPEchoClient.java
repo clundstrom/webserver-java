@@ -1,17 +1,8 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-public class TCPEchoClient {
-
-    public static final int MYPORT = 6000;
-    public static final String MSG = "Ping!";
-    public static int TRANSFER_RATE = 2;
-    public static int BUFSIZE = 1024;
-
+public class TCPEchoClient extends AbstractNetworkLayer {
 
     public static void main(String[] args) {
 
@@ -49,7 +40,8 @@ public class TCPEchoClient {
             SocketAddress remote = new InetSocketAddress(args[0], Integer.parseInt(args[1]));
 
             // Create logger
-            Logger logger = new Logger();
+            Logger logger = new Logger(DEBUG);
+            // TODO: Abstract
 
             // Connect to remote, set conn timeout to 10sec
             socket.connect(remote, 10000);
@@ -90,24 +82,6 @@ public class TCPEchoClient {
         }
         catch (IOException e) {
             System.err.println("There was an error reading or writing to stream.");
-        }
-    }
-
-    /**
-     * Function which handles package scheduling for the client.
-     * @param task Custom task which sends and receives packages.
-     */
-    private static void scheduleTask(TCPTransmitTask task) {
-
-        // Create continuous execution of the task.
-        ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
-        task.attachScheduler(es);
-
-        // Special case, run once.
-        if (TRANSFER_RATE == 0) {
-            es.execute(task);
-        } else {
-            es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
         }
     }
 }

@@ -1,8 +1,6 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.PortUnreachableException;
-import java.net.SocketTimeoutException;
 import java.util.concurrent.ScheduledExecutorService;
 
 
@@ -10,9 +8,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * Class that represents a task which will send and receive packets at a specified TRANSFER RATE.
  * Includes a logger which keeps track of amount of packages sent and received, also if packages are lost.
  */
-public class UDPSendReceiveTask implements Runnable {
-
-    private static boolean DEBUG = false;
+public class UDPSendReceiveTask implements IEchoTask {
 
     private DatagramSocket socket;
     private DatagramPacket sent;
@@ -53,14 +49,7 @@ public class UDPSendReceiveTask implements Runnable {
             }
 
             /* Compare sent and received message */
-            String receivedString = new String(received.getData(), received.getOffset(), received.getLength());
-
-            if (receivedString.compareTo(new String(sent.getData(), sent.getOffset(), sent.getLength())) == 0) {
-                if (DEBUG)
-                    System.out.printf("Sent/Rec: %d, %d bytes\n", sent.getLength(), received.getLength());
-            } else {
-                    System.err.printf("Warning(Packet mismatch): Sent/Rec: %d, %d bytes\n", sent.getLength(), received.getLength());
-            }
+            logger.compare(received, sent);
 
             total = System.currentTimeMillis() - start;
 
@@ -69,6 +58,7 @@ public class UDPSendReceiveTask implements Runnable {
                 System.out.println(logger.toString());
                 return;
             }
+
             logger.setRemaining(nrOfPackets - i - 1);
         }
         System.out.println(logger);
@@ -83,12 +73,9 @@ public class UDPSendReceiveTask implements Runnable {
         }
     }
 
+    @Override
     public void setNrOfPackets(int i) {
         this.nrOfPackets = i;
-    }
-
-    public void setDebug(boolean debug) {
-        this.DEBUG = debug;
     }
 
     /**
@@ -103,6 +90,7 @@ public class UDPSendReceiveTask implements Runnable {
     /**
      * Stops continuous scheduling of transmission tasks.
      */
+    @Override
     public void stopSchedule() {
         this.es.shutdownNow();
     }
