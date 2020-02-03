@@ -1,45 +1,24 @@
 import java.net.*;
 
-public class UDPEchoClient extends AbstractNetworkLayer {
+public class UDPEchoClient extends AbstractNetworkLayer<DatagramSocket> {
 
-    public UDPEchoClient(int myport, String message, int bufferSize, int transferRate, boolean debug){
-        MYPORT = myport;
-        MSG = message;
-        BUFSIZE = bufferSize;
-        TRANSFER_RATE = transferRate;
+    public UDPEchoClient(String[] args, boolean debug) {
         DEBUG = debug;
+        verifyArguments(args);
+        initialize(args);
     }
 
-    public static void main(String[] args) {
-        // Handle mandatory arguments
-        if (args.length < 2) {
-            System.err.println("Error: Specify arguments server_name port (buffer-size) (transfer-rate)");
-            System.exit(1);
-        }
+    public UDPEchoClient(String[] args) {
+        verifyArguments(args);
+        initialize(args);
+    }
 
-        // Parse buffer-size
-        if (args.length >= 3) {
-            BUFSIZE = ArgParser.tryParse(args[2]);
-            if (BUFSIZE < 1) {
-                System.err.println("Buffer size not allowed. Exiting..");
-                System.exit(1);
-            }
-
-            if (BUFSIZE < MSG.getBytes().length) {
-                System.err.println("Warning: Buffer size less than message.");
-            }
-        }
-
-        // Parse transfer rate
-        if (args.length >= 4) {
-            TRANSFER_RATE = ArgParser.tryParse(args[3]);
-        }
-
+    public void initialize(String[] args) {
         try {
             byte[] buf = ArgParser.parseToBuffer(MSG, BUFSIZE);
 
-            // Create socket
-            DatagramSocket socket = new DatagramSocket(null);
+            // Create UDP socket
+            socket = new DatagramSocket(null);
 
             // Create local endpoint using bind()
             SocketAddress localBindPoint = new InetSocketAddress(MYPORT);

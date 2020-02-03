@@ -2,35 +2,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 
-public class TCPEchoClient extends AbstractNetworkLayer {
+public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
 
-    public static void main(String[] args) {
+    public TCPEchoClient(String[] args, boolean debug) {
+        DEBUG = debug;
+        verifyArguments(args);
+        initialize(args);
+    }
 
-        // Handle mandatory arguments
-        if (args.length < 2) {
-            System.err.println("Error: Specify arguments server_name port (buffer-size) (transfer-rate) ");
-            System.exit(1);
-        }
+    public TCPEchoClient(String[] args) {
+        verifyArguments(args);
+        initialize(args);
+    }
 
-        // Parse buffer-size
-        if (args.length >= 3) {
-            BUFSIZE = ArgParser.tryParse(args[2]);
-            if(BUFSIZE < 1) {
-                System.err.println("Buffer size not allowed. Exiting..");
-                System.exit(1);
-            }
-        }
-
-        // Parse transfer-rate
-        if (args.length >= 4) {
-            TRANSFER_RATE = ArgParser.tryParse(args[3]);
-        }
-
+    public void initialize(String[] args) {
         try {
             byte[] buf = new byte[BUFSIZE];
 
             // Create socket
-            Socket socket = new Socket();
+            socket = new Socket();
 
             // Create local endpoint and bind to socket
             SocketAddress local = new InetSocketAddress(MYPORT);
@@ -52,13 +42,14 @@ public class TCPEchoClient extends AbstractNetworkLayer {
             // Transmit task
             scheduleTask(task);
 
-            // Open input socket
+            // Open input stream
             InputStream in = socket.getInputStream();
 
             // Continuously read from input stream
             int read;
             while((read = in.read(buf)) != -1){
-                System.out.println(new String(buf, 0, read));
+                if(DEBUG)
+                    System.out.println(new String(buf, 0, read));
             }
 
             // Close streams and socket when there is nothing to read or server terminates.
