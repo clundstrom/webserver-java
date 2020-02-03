@@ -24,6 +24,7 @@ public class TCPTransmitTask implements IEchoTask {
         this.buffSize = buffSize;
     }
 
+
     @Override
     public void run() {
         long start = System.currentTimeMillis();
@@ -40,7 +41,7 @@ public class TCPTransmitTask implements IEchoTask {
             // Process messages
             for (int i = 0; i < nrOfPackets; i++) {
                 // Write to output
-                output.write(buf, 0 , buf.length);
+                output.write(buf, 0, buf.length);
                 logger.setSent(logger.getSent() + 1);
                 logger.setReceived(logger.getReceived() + 1);
             }
@@ -54,12 +55,10 @@ public class TCPTransmitTask implements IEchoTask {
                 System.exit(0);
                 Thread.currentThread().interrupt();
             }
-        }
-        catch (SocketException e){
+        } catch (SocketException e) {
             System.err.println("Connection to server lost.");
             stopSchedule();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.err.println("There was an error writing to or reading from stream.");
             stopSchedule();
         }
@@ -76,6 +75,7 @@ public class TCPTransmitTask implements IEchoTask {
 
     /**
      * Attaches scheduler to task for termination.
+     *
      * @param es ScheduledExecutorService
      */
     public void attachScheduler(ScheduledExecutorService es) {
@@ -85,11 +85,12 @@ public class TCPTransmitTask implements IEchoTask {
 
     /**
      * Wait until the full second has passed before terminating thread
+     *
      * @param total
      * @param start
      */
     @Override
-    public void sleepTask(long total, long start){
+    public void sleepTask(long total, long start) {
         try {
             Thread.sleep(1000 - (total - start));
         } catch (InterruptedException e) {
@@ -99,11 +100,10 @@ public class TCPTransmitTask implements IEchoTask {
     }
 
 
-
     /**
      * Stops continuous scheduling of transmission tasks.
      */
-    public void stopSchedule(){
+    public void stopSchedule() {
         this.es.shutdownNow();
     }
 

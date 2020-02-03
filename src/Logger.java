@@ -53,7 +53,4 @@ public class Logger {
             System.err.printf("Warning(Packet mismatch): Sent/Rec: %d, %d bytes\n", sent.getLength(), received.getLength());
         }
     }
-
-
-
 }

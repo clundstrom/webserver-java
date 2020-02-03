@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
@@ -15,10 +14,12 @@ public class TCPEchoTask implements Runnable {
         this.buffSize = buffSize;
     }
 
+
     public TCPEchoTask(Socket socket) {
         this.socket = socket;
         this.buffSize = 0;
     }
+
 
     @Override
     public void run() {

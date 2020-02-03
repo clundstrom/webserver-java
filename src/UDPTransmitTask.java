@@ -25,6 +25,7 @@ public class UDPTransmitTask implements IEchoTask {
         this.logger = logger;
     }
 
+
     @Override
     public void run() {
         long start = System.currentTimeMillis();
@@ -67,6 +68,7 @@ public class UDPTransmitTask implements IEchoTask {
         sleepTask(total, start);
     }
 
+
     @Override
     public void setNrOfPackets(int i) {
         this.nrOfPackets = i;
@@ -81,6 +83,7 @@ public class UDPTransmitTask implements IEchoTask {
         this.es = es;
     }
 
+
     /**
      * Stops continuous scheduling of transmission tasks.
      */
@@ -89,17 +92,18 @@ public class UDPTransmitTask implements IEchoTask {
         this.es.shutdownNow();
     }
 
+
     /**
      * Stops all tasks and exits.
      */
-    public void stopScheduleAndExit(){
+    public void stopScheduleAndExit() {
         this.es.shutdownNow();
         System.exit(1);
     }
 
 
     @Override
-    public void sleepTask(long total, long start){
+    public void sleepTask(long total, long start) {
         try {
             Thread.sleep(1000 - (total - start));
         } catch (InterruptedException e) {

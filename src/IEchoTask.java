@@ -6,7 +6,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * tasks and termination of those.
  */
 public interface IEchoTask extends Runnable {
-
     void setNrOfPackets(int i);
     void run();
     void attachScheduler(ScheduledExecutorService es);

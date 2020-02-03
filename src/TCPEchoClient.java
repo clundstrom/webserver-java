@@ -10,10 +10,12 @@ public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
         initialize(args);
     }
 
+
     public TCPEchoClient(String[] args) {
         verifyArguments(args);
         initialize(args);
     }
+
 
     public void initialize(String[] args) {
         try {
