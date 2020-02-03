@@ -58,7 +58,7 @@ public class UDPEchoClient extends AbstractNetworkLayer {
             Logger logger = new Logger(DEBUG);
 
             // Create packet-task
-            UDPTransmitTask task = new UDPTransmitTask(socket, sendPacket, receivePacket, MSG, TRANSFER_RATE, logger);
+            UDPTransmitTask task = new UDPTransmitTask(socket, sendPacket, receivePacket, TRANSFER_RATE, logger);
 
             // Send and receive message
             scheduleTask(task);
