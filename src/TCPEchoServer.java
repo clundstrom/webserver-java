@@ -5,7 +5,7 @@ import java.util.concurrent.Executors;
 
 public class TCPEchoServer {
 
-    public static int MYPORT = 6000;
+    public static int MYPORT = 25650;
     public static int BUFSIZE = 1024;
 
     public static void main(String[] args) {
