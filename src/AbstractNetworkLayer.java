@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractNetworkLayer<T> {
 
     protected static int BUFSIZE = 1024;
-    protected static int MYPORT = 6000;
+    protected static int MYPORT = 25650;
     protected T socket;
 
 
