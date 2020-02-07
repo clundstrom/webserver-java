@@ -33,7 +33,6 @@ public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
 
             // Create logger
             Logger logger = new Logger(DEBUG);
-            // TODO: Abstract
 
             // Connect to remote, set conn timeout to 10sec
             socket.connect(remote, 10000);
@@ -51,7 +50,7 @@ public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
             int read;
             while((read = in.read(buf)) != -1){
                 if(DEBUG)
-                    System.out.print(new String(buf, 0, read));
+                    System.out.println(new String(buf, 0, read));
             }
 
             // Close streams and socket when there is nothing to read or server terminates.

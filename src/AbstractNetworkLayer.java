@@ -13,7 +13,6 @@ public abstract class AbstractNetworkLayer<T> {
     protected T socket;
 
 
-    // TODO: Check what variables can be kept
     public static String MSG = "An echo message!";
     public static int TRANSFER_RATE = 0;
 
