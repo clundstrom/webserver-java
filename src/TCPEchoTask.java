@@ -1,6 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -34,13 +34,13 @@ public class TCPEchoTask implements Runnable {
             var buf = new byte[buffSize];
 
             InputStream is = socket.getInputStream();
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            OutputStream out = socket.getOutputStream();
 
             // Read input
             int read;
             while((read = is.read(buf)) != -1){
                 // Echo back what is read
-                out.println(new String(buf, 0,read));
+                out.write(buf);
             }
             out.flush();
 

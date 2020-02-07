@@ -13,8 +13,8 @@ public class Init {
     public static boolean DEBUG = true;
 
     public static void main(String[] args) {
-        //AbstractNetworkLayer<Socket> tcp = new TCPEchoClient(args, DEBUG); // Comment out this or the one below!
-        AbstractNetworkLayer<DatagramSocket> udp = new UDPEchoClient(args, DEBUG);
+        AbstractNetworkLayer<Socket> tcp = new TCPEchoClient(args, DEBUG); // Comment out this or the one below!
+        //AbstractNetworkLayer<DatagramSocket> udp = new UDPEchoClient(args, DEBUG);
     }
 
 }
