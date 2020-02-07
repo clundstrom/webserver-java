@@ -30,7 +30,7 @@ public abstract class AbstractNetworkLayer<T> {
      * Function which handles task scheduling for the client.
      * @param task Custom task which sends and receives packages.
      */
-    protected static void scheduleTask(IEchoTask task){
+    protected static void scheduleTask(IEchoTaskAdapter task){
         ScheduledExecutorService es = new ScheduledThreadPoolExecutor(1);
         task.attachScheduler(es);
 

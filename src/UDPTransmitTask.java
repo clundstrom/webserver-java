@@ -8,7 +8,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * Class that represents a task which will send and receive packets at a specified TRANSFER RATE.
  * Includes a logger which keeps track of amount of packages sent and received, also if packages are lost.
  */
-public class UDPTransmitTask implements IEchoTask {
+public class UDPTransmitTask implements IEchoTaskAdapter {
 
     private DatagramSocket socket;
     private DatagramPacket sent;

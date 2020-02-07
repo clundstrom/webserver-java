@@ -1,14 +1,14 @@
 For intelliJ setup
 
 1. Mark src folder as source
-2. Pick an out-folder
+2. Pick an output-folder
 3. Set project SDK to Java 11.0.1
 
 -------------------------------------------------
 
 How to run CLIENTS:
 
-1. Choose which client to use by comment out the other.
+1. Choose which client to use by comment out the other in the Init.java file.
 2. Run Init class with arguments:   IP REMOTE_PORT BUFFER_SIZE TRANSFER_RATE
 
 Example:

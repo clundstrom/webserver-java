@@ -7,7 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  * Class which represents a TCP transmission Task.
  */
-public class TCPTransmitTask implements IEchoTask {
+public class TCPTransmitTask implements IEchoTaskAdapter {
 
     private Socket socket;
     private int nrOfPackets;
