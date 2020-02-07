@@ -66,7 +66,7 @@ public class TCPTransmitTask implements IEchoTaskAdapter {
 
         total = System.currentTimeMillis();
 
-        /* Wait until the full second has passed before terminating thread*/
+        // Wait until the full second has passed before terminating thread.
         sleepTask(total, start);
     }
 

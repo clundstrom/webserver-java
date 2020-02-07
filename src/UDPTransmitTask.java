@@ -31,7 +31,7 @@ public class UDPTransmitTask implements IEchoTaskAdapter {
         long start = System.currentTimeMillis();
         long total;
 
-        /* Process packages */
+        // Process packages
         for (int i = 0; i < nrOfPackets; i++) {
             try {
                 // Send and receive packets.
@@ -47,7 +47,7 @@ public class UDPTransmitTask implements IEchoTaskAdapter {
                 stopScheduleAndExit();
             }
 
-            /* Compare sent and received message */
+            // Compare sent and received messages
             logger.compare(received, sent);
 
             total = System.currentTimeMillis() - start;
@@ -64,7 +64,7 @@ public class UDPTransmitTask implements IEchoTaskAdapter {
         total = System.currentTimeMillis();
 
 
-        /* Wait until the full second has passed */
+        // Wait until the full second has passed
         sleepTask(total, start);
     }
 

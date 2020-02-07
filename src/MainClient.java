@@ -7,7 +7,7 @@ import java.net.Socket;
  *
  * Arguments needed to run: IP PORT BUFFER TRANSFER RATE
  */
-public class Init {
+public class MainClient {
 
     // Enabling debug will show a live feed of sent and received packets and their size. Not suitable for high rates.
     public static boolean DEBUG = true;

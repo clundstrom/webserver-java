@@ -1,3 +1,6 @@
+/**
+ * Helper class which handles some common argument parsing.
+ */
 public class ArgParser {
 
 
