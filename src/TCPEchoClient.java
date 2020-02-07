@@ -43,9 +43,18 @@ public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
 
             // Continuously read from input stream
             int read;
+            StringBuilder sb = new StringBuilder();
             while((read = in.read(buf)) != -1){
-                if(DEBUG)
-                    System.out.println(new String(buf, 0, read));
+
+                // Append read bytes to string
+                sb.append(new String(buf, 0 ,read));
+
+                if(DEBUG && sb.length() == MSG.length()){
+                    System.out.println(sb.toString());
+                    // Reset StringBuilder
+                    sb.setLength(0);
+                }
+                
                 if(shutdownEarly){
                     break;
                 }
