@@ -8,7 +8,7 @@ For intelliJ setup
 
 How to run CLIENTS:
 
-1. Choose which server to use by comment out the other.
+1. Choose which client to use by comment out the other.
 2. Run Init class with arguments:   IP REMOTE_PORT BUFFER_SIZE TRANSFER_RATE
 
 Example:
