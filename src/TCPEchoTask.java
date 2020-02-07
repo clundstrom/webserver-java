@@ -29,7 +29,7 @@ public class TCPEchoTask implements Runnable {
             int read;
             while((read = is.read(buf)) != -1){
                 // Echo back what is read
-                out.write(new String(buf,0,read).trim().getBytes());
+                out.write(buf,0,read);
             }
             out.flush();
 
