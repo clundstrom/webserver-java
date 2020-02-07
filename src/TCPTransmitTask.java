@@ -13,15 +13,13 @@ public class TCPTransmitTask implements IEchoTask {
     private int nrOfPackets;
     private Logger logger;
     private String message;
-    private int buffSize;
     ScheduledExecutorService es;
 
-    public TCPTransmitTask(Socket socket, int nrOfPackets, String message, Logger logger, int buffSize) {
+    public TCPTransmitTask(Socket socket, int nrOfPackets, String message, Logger logger) {
         this.socket = socket;
         this.nrOfPackets = nrOfPackets;
         this.logger = logger;
         this.message = message;
-        this.buffSize = buffSize;
     }
 
 
@@ -66,9 +64,9 @@ public class TCPTransmitTask implements IEchoTask {
         // Print current state of logger.
         System.out.println(logger);
 
-        /* Wait until the full second has passed before terminating thread*/
         total = System.currentTimeMillis();
 
+        /* Wait until the full second has passed before terminating thread*/
         sleepTask(total, start);
     }
 
@@ -94,8 +92,7 @@ public class TCPTransmitTask implements IEchoTask {
         try {
             Thread.sleep(1000 - (total - start));
         } catch (InterruptedException e) {
-            // Interrupt thread
-            Thread.currentThread().interrupt();
+            System.err.println("Task timeout.");
         }
     }
 

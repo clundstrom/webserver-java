@@ -12,9 +12,9 @@ public abstract class AbstractNetworkLayer<T> {
     protected static int MYPORT = 25650;
     protected T socket;
 
-
     public static String MSG = "An echo message!";
     public static int TRANSFER_RATE = 0;
+    public static volatile boolean shutdownEarly = false;
 
     // Enabling debug will show a live feed of sent and received packets and their size. Not suitable for high rates.
     public static boolean DEBUG = true;
@@ -37,7 +37,8 @@ public abstract class AbstractNetworkLayer<T> {
         // Special case, send once.
         if (TRANSFER_RATE == 0) {
             task.setNrOfPackets(1);
-            es.execute(task);
+            shutdownEarly = true;
+            task.run();
         } else {
             // Run task each second
             es.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);

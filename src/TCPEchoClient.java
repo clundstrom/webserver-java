@@ -4,14 +4,9 @@ import java.net.*;
 
 public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
 
+
     public TCPEchoClient(String[] args, boolean debug) {
         DEBUG = debug;
-        verifyArguments(args);
-        initialize(args);
-    }
-
-
-    public TCPEchoClient(String[] args) {
         verifyArguments(args);
         initialize(args);
     }
@@ -38,7 +33,7 @@ public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
             socket.connect(remote, 10000);
 
             // Create transmission task
-            TCPTransmitTask task = new TCPTransmitTask(socket, TRANSFER_RATE, MSG, logger, BUFSIZE);
+            TCPTransmitTask task = new TCPTransmitTask(socket, TRANSFER_RATE, MSG, logger);
 
             // Transmit task
             scheduleTask(task);
@@ -51,6 +46,8 @@ public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
             while((read = in.read(buf)) != -1){
                 if(DEBUG)
                     System.out.println(new String(buf, 0, read));
+                if(shutdownEarly)
+                    break;
             }
 
             // Close streams and socket when there is nothing to read or server terminates.
