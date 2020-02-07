@@ -15,20 +15,9 @@ public class TCPEchoTask implements Runnable {
     }
 
 
-    public TCPEchoTask(Socket socket) {
-        this.socket = socket;
-        this.buffSize = 0;
-    }
-
-
     @Override
     public void run() {
         try {
-
-            // Make sure a buffer size is specified
-            if (buffSize <= 0) {
-                this.buffSize = 100;
-            }
 
             // Create buffer
             var buf = new byte[buffSize];
