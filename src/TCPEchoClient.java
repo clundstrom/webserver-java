@@ -46,8 +46,9 @@ public class TCPEchoClient extends AbstractNetworkLayer<Socket> {
             while((read = in.read(buf)) != -1){
                 if(DEBUG)
                     System.out.println(new String(buf, 0, read));
-                if(shutdownEarly)
+                if(shutdownEarly){
                     break;
+                }
             }
 
             // Close streams and socket when there is nothing to read or server terminates.
