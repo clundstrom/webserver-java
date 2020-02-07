@@ -27,7 +27,7 @@ public class TCPEchoTask implements Runnable {
 
             // Make sure a buffer size is specified
             if (buffSize <= 0) {
-                this.buffSize = socket.getReceiveBufferSize();
+                this.buffSize = 100;
             }
 
             // Create buffer
@@ -40,7 +40,7 @@ public class TCPEchoTask implements Runnable {
             int read;
             while((read = is.read(buf)) != -1){
                 // Echo back what is read
-                out.write(buf);
+                out.write(new String(buf,0,read).trim().getBytes());
             }
             out.flush();
 

@@ -33,7 +33,7 @@ public class TCPTransmitTask implements IEchoTask {
         try {
 
             // Create buffer
-            byte[] buf = ArgParser.parseToBuffer(message, buffSize);
+            byte[] buf = message.getBytes();
 
             // Create a Writer to the output-stream
             OutputStream output = socket.getOutputStream();
