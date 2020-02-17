@@ -1,7 +1,9 @@
 package assign2;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * Helper class which handles some common argument parsing.
@@ -25,29 +27,7 @@ public class ArgParser {
 
         return 0;
     }
-
-
-    /**
-     * Parses message to specified buffer size.
-     * @param message String to parse.
-     * @return Byte array with parsed message.
-     */
-    static byte[] parseToBuffer(String message, int buffSize) {
-        byte[] bytes = message.getBytes();
-        byte[] buff = new byte[buffSize];
-
-        for(int i=0; i < message.length(); i++){
-            if(i == buff.length){
-                System.err.println("Could not parse the complete message. (Buff size: " + buff.length + " Message: " + message.length() + ")");
-                return buff;
-            }
-            buff[i] = bytes[i];
-        }
-        return buff;
-    }
-
-
-    static String getStaticContent(String item){
+    static String[] getStaticContent(String item){
         String[] parsedHeader = item.split("\r\n");
         String[] parsedGet = parsedHeader[0].split( " ");
         if (parsedGet[1].equals("/")) {
@@ -56,6 +36,33 @@ public class ArgParser {
         String path = Paths.get("").toAbsolutePath().toString();
         path += "\\static" + parsedGet[1];
         System.out.println("Serving: " + Paths.get(path).getFileName());
-        return path;
+
+        String extension = "";
+        // Parse file extension
+        if(parsedGet[1].contains(".") && parsedGet[1].lastIndexOf(".") != 0){
+            extension = parsedGet[1].substring(parsedGet[1].lastIndexOf(".")+1);
+        }
+
+        String[] contentInfo = {path, determineContentType(extension)};
+
+        return contentInfo;
     }
+
+
+    static String determineContentType(String extension){
+        try {
+            List<String> supported = Files.readAllLines(Paths.get("SupportedContentTypes.txt").toAbsolutePath());
+
+            for(String item : supported){
+                if(item.contains(extension)){
+                    return item;
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Could not read supported content types.");
+        }
+        return "text/html";
+    }
+
+
 }
