@@ -27,28 +27,53 @@ public class ArgParser {
 
         return 0;
     }
+
+
+    /**
+     * Fetches content from static path.
+     * @param item item to be fetched.
+     * @return content info and file ending
+     */
     static String[] getStaticContent(String item){
         String[] parsedHeader = item.split("\r\n");
         String[] parsedGet = parsedHeader[0].split( " ");
+
+        // Default path
         if (parsedGet[1].equals("/")) {
             parsedGet[1] = "\\index.html";
         }
-        String path = Paths.get("").toAbsolutePath().toString();
-        path += "\\static" + parsedGet[1];
-        System.out.println("Serving: " + Paths.get(path).getFileName());
 
+        // Get the absolute path of the file.
+        String path = Paths.get("").toAbsolutePath().toUri().toString();
+        path += "\\static" + parsedGet[1];
+
+        // Get the file extension if there is one.
         String extension = "";
-        // Parse file extension
-        if(parsedGet[1].contains(".") && parsedGet[1].lastIndexOf(".") != 0){
-            extension = parsedGet[1].substring(parsedGet[1].lastIndexOf(".")+1);
+        if(parsedGet[1].contains(".") && parsedGet[1].lastIndexOf(".") != 0) {
+            extension = parsedGet[1].substring(parsedGet[1].lastIndexOf(".") + 1);
         }
 
+        // If no extension, look for index.htm or index.html in directory
+        else {
+            //TODO fix this
+            String checkPath = path;
+            checkPath += "\\static" + parsedGet[1] + "\\index.htm";
+            System.out.println(Paths.get(path).toAbsolutePath().toFile().exists());
+        }
+
+
+        System.out.println("Serving: " + Paths.get(path).getFileName());
         String[] contentInfo = {path, determineContentType(extension)};
 
         return contentInfo;
     }
 
 
+    /**
+     * Determines the content type of the header by matching in a predefined list of supported types.
+     * @param extension Extension matched against the database.
+     * @return Returns correct content type.
+     */
     static String determineContentType(String extension){
         try {
             List<String> supported = Files.readAllLines(Paths.get("SupportedContentTypes.txt").toAbsolutePath());

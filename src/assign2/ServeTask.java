@@ -81,7 +81,7 @@ public class ServeTask implements Runnable {
         response += "Date:" + LocalDateTime.now() + "\n";
         response += "Content-Length:" + contentLength + "\n";
         response += "Connection: close \n";
-        response += "Content-Type:" + contentType + "; charset=UTF-8\n";
+        response += "Content-Type:" + contentType +"\n";
         response += "\r\n";
     }
 }

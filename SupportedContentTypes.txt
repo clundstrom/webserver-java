@@ -1,10 +1,10 @@
+text/html
 image/gif
 image/jpeg
 image/png
 image/tiff
 text/css
 text/csv
-text/html
 text/plain
 text/xml
 video/mpeg

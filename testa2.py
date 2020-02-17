@@ -1,4 +1,6 @@
-# Simple script to test the 1DV701 webserver. 
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+# Simple script to test the 1DV701 webserver.
 
 import requests
 from pathlib import Path
@@ -10,7 +12,7 @@ server = '127.0.0.1'
 port = 8080
 
 # Points to copies of the files, not served by the web server
-dirbase = Path('/Users/mogge/web')
+dirbase = Path('D:\Downloads\web')
 
 # Allow for .htm solutions
 fe = '.html'
