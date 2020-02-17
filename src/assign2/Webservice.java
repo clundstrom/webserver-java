@@ -37,10 +37,10 @@ public class Webservice {
                 System.out.println("Creating thread for incoming request: " + incoming.getInetAddress() + " " + incoming.getPort());
 
                 // Create separate thread for the task
-                TCPEchoTask task = new TCPEchoTask(incoming, BUFSIZE);
+                ServeTask task = new ServeTask(incoming, BUFSIZE);
 
                 // Submit task to executor service
-                es.submit(task);
+                es.execute(task);
             }
         }
         catch (BindException e){

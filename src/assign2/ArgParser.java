@@ -1,5 +1,8 @@
 package assign2;
 
+import java.io.File;
+import java.nio.file.Paths;
+
 /**
  * Helper class which handles some common argument parsing.
  */
@@ -44,4 +47,15 @@ public class ArgParser {
     }
 
 
+    static String getStaticContent(String item){
+        String[] parsedHeader = item.split("\r\n");
+        String[] parsedGet = parsedHeader[0].split( " ");
+        if (parsedGet[1].equals("/")) {
+            parsedGet[1] = "\\index.html";
+        }
+        String path = Paths.get("").toAbsolutePath().toString();
+        path += "\\static" + parsedGet[1];
+        System.out.println("Serving: " + Paths.get(path).getFileName());
+        return path;
+    }
 }
