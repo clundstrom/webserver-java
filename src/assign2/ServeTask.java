@@ -35,7 +35,7 @@ public class ServeTask implements Runnable {
                 // Add to get request
                 incomingHeader += new String(buf, 0, read);
 
-                String[] info = ArgParser.getStaticContent(incomingHeader);
+                String[] info = ArgParser.getStaticContentInfo(incomingHeader);
                 byte[] data = composeData(Paths.get(info[0]));
                 composeResponse(data, info[1]);
                 out.write(response.getBytes());
@@ -77,13 +77,12 @@ public class ServeTask implements Runnable {
         if(data != null){
             contentLength = data.length;
         }
-
-        response += "HTTP/1.1 200 OK\n";
-        response += "Server: Webservice\n";
-        response += "Date:" + LocalDateTime.now() + "\n";
-        response += "Content-Length:" + contentLength + "\n";
-        response += "Connection: close \n";
-        response += "Content-Type:" + contentType +"\n";
+        response += "HTTP/1.1 200 OK\r\n";
+        response += "Server: Webservice\r\n";
+        response += "Date:" + LocalDateTime.now() + "\r\n";
+        response += "Content-Length:" + contentLength + "\r\n";
+        response += "Connection: close \r\n";
+        response += "Content-Type:" + contentType +"\r\n";
         response += "\r\n";
     }
 }

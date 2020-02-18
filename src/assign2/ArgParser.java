@@ -1,11 +1,8 @@
 package assign2;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.SQLOutput;
 import java.util.List;
 
 /**
@@ -35,9 +32,9 @@ public class ArgParser {
     /**
      * Fetches content from static path.
      * @param item item to be fetched.
-     * @return content info and file ending
+     * @return content file path and file extension
      */
-    static String[] getStaticContent(String item) {
+    static String[] getStaticContentInfo(String item) {
         String[] parsedHeader = item.split("\r\n");
         String[] parsedGet = parsedHeader[0].split( " ");
         String contentDir = Paths.get("").toString() + "static";
@@ -57,13 +54,11 @@ public class ArgParser {
         else{
             url += "/index.html";
         }
-        
-        // Check the Path
+
+        // Append url
         contentDir += url;
 
-        String[] contentInfo = {contentDir, determineContentType(extension)};
-
-        return contentInfo;
+        return new String[]{contentDir, determineContentType(extension)};
     }
 
 
