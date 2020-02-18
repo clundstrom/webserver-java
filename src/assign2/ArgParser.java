@@ -1,8 +1,11 @@
 package assign2;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.SQLOutput;
 import java.util.List;
 
 /**
@@ -34,36 +37,31 @@ public class ArgParser {
      * @param item item to be fetched.
      * @return content info and file ending
      */
-    static String[] getStaticContent(String item){
+    static String[] getStaticContent(String item) {
         String[] parsedHeader = item.split("\r\n");
         String[] parsedGet = parsedHeader[0].split( " ");
+        String contentDir = Paths.get("").toString() + "static";
+        String url = parsedGet[1];
 
-        // Default path
-        if (parsedGet[1].equals("/")) {
-            parsedGet[1] = "\\index.html";
+
+        // If ends with / or no extension
+        if(url.endsWith("/")){
+            url += "/index.html";
         }
-
-        // Get the absolute path of the file.
-        String path = Paths.get("").toAbsolutePath().toUri().toString();
-        path += "\\static" + parsedGet[1];
 
         // Get the file extension if there is one.
         String extension = "";
-        if(parsedGet[1].contains(".") && parsedGet[1].lastIndexOf(".") != 0) {
-            extension = parsedGet[1].substring(parsedGet[1].lastIndexOf(".") + 1);
+        if(url.contains(".") && url.lastIndexOf(".") != 0) {
+            extension = url.substring(url.lastIndexOf(".") + 1);
         }
-
-        // If no extension, look for index.htm or index.html in directory
-        else {
-            //TODO fix this
-            String checkPath = path;
-            checkPath += "\\static" + parsedGet[1] + "\\index.htm";
-            System.out.println(Paths.get(path).toAbsolutePath().toFile().exists());
+        else{
+            url += "/index.html";
         }
+        
+        // Check the Path
+        contentDir += url;
 
-
-        System.out.println("Serving: " + Paths.get(path).getFileName());
-        String[] contentInfo = {path, determineContentType(extension)};
+        String[] contentInfo = {contentDir, determineContentType(extension)};
 
         return contentInfo;
     }

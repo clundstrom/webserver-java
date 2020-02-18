@@ -42,8 +42,6 @@ public class ServeTask implements Runnable {
                 out.write(data);
             }
 
-
-
             out.flush();
             out.close();
 
@@ -63,6 +61,10 @@ public class ServeTask implements Runnable {
         }
         catch (IOException e){
             System.err.println("There was an error");
+            // call 404
+        }
+        catch (NullPointerException e){
+            System.err.println("Could not find specified path.");
             // call 404
         }
         return null;
