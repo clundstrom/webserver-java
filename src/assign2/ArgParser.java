@@ -28,16 +28,23 @@ public class ArgParser {
         return 0;
     }
 
+    static void verifyArguments(String[] args){
+        // Handle mandatory arguments
+        if (args.length < 2) {
+            System.err.println("Error: Specify arguments (PORT) (RELATIVE PATH)\nExample: 8080 static ");
+            System.exit(1);
+        }
+    }
 
     /**
      * Fetches content from static path.
      * @param item item to be fetched.
      * @return content file path and file extension
      */
-    static String[] getStaticContentInfo(String item) {
+    static String[] getStaticContentInfo(String item, String defaultPath) {
         String[] parsedHeader = item.split("\r\n");
         String[] parsedGet = parsedHeader[0].split( " ");
-        String contentDir = Paths.get("").toString() + "static";
+        String contentDir = Paths.get("").toString() + defaultPath;
         String url = parsedGet[1];
 
 

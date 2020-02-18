@@ -11,13 +11,16 @@ import java.time.LocalDateTime;
 public class ServeTask implements Runnable {
 
     private Socket socket;
-    private int buffSize;
+    private int buffSize = 1024;
+    private String defaultPath = "";
 
-    public ServeTask(Socket socket, int buffSize) {
+    public ServeTask(Socket socket, String path) {
         this.socket = socket;
-        this.buffSize = buffSize;
+        this.defaultPath = path;
     }
+
     String response = "";
+
     @Override
     public void run() {
         try {
@@ -35,7 +38,7 @@ public class ServeTask implements Runnable {
                 // Add to get request
                 incomingHeader += new String(buf, 0, read);
 
-                String[] info = ArgParser.getStaticContentInfo(incomingHeader);
+                String[] info = ArgParser.getStaticContentInfo(incomingHeader, defaultPath);
                 byte[] data = composeData(Paths.get(info[0]));
                 composeResponse(data, info[1]);
                 out.write(response.getBytes());
