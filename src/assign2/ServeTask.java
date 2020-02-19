@@ -6,7 +6,6 @@ import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 
 public class ServeTask implements Runnable {
 
@@ -19,7 +18,6 @@ public class ServeTask implements Runnable {
         this.defaultPath = path;
     }
 
-    String response = "";
 
     @Override
     public void run() {
@@ -40,8 +38,12 @@ public class ServeTask implements Runnable {
 
                 String[] info = ArgParser.getStaticContentInfo(incomingHeader, defaultPath);
                 byte[] data = composeData(Paths.get(info[0]));
-                composeResponse(data, info[1]);
-                out.write(response.getBytes());
+
+                HttpResponse hr = new HttpResponse();
+                hr.setStatusCode("200 OK");
+                hr.setContentLength(data.length);
+                hr.setContentType(info[1]);
+                out.write(hr.composeResponse());
                 out.write(data);
             }
 
@@ -71,21 +73,5 @@ public class ServeTask implements Runnable {
             // call 404
         }
         return null;
-    }
-
-
-    void composeResponse(byte[] data, String contentType){
-        int contentLength = 0;
-
-        if(data != null){
-            contentLength = data.length;
-        }
-        response += "HTTP/1.1 200 OK\r\n";
-        response += "Server: Webservice\r\n";
-        response += "Date:" + LocalDateTime.now() + "\r\n";
-        response += "Content-Length:" + contentLength + "\r\n";
-        response += "Connection: close \r\n";
-        response += "Content-Type:" + contentType +"\r\n";
-        response += "\r\n";
     }
 }

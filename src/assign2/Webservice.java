@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 public class Webservice {
 
+    //TODO: 302, 403, 404, 500
     public static int MYPORT = 8080;
     public static String PATH = "static";
 
