@@ -12,8 +12,9 @@ public class ServeTask implements Runnable {
     private Socket socket;
     private int buffSize = 1024;
     private String defaultPath = "";
-    private String[] protectedPaths = {"protected.html"};
+    private String[] protectedRoutes = {"protected.html"};
     private byte[] data;
+    private String defaultPassword = "1dv701";
 
     public ServeTask(Socket socket, String path) {
         this.socket = socket;
@@ -43,11 +44,6 @@ public class ServeTask implements Runnable {
                 // Fetch information about the content requested
                 String[] info = ArgParser.getStaticContentInfo(incomingHeader, defaultPath);
 
-                // Verify that content is not protected
-                if(isContentProtected(info)){
-                    hr = new HttpResponse("403 forbidden",0 , "text/html");
-                }
-
                 // Verify that content exists
                 if(isContent(Paths.get(info[0]))){
                     data = composeData(Paths.get(info[0]));
@@ -57,6 +53,11 @@ public class ServeTask implements Runnable {
                 }
                 else{
                     hr = new HttpResponse("404 not found", 0, "text/html");
+                }
+
+                // Verify that content is not protected
+                if(isContentProtected(info)){
+                    hr = new HttpResponse("403 forbidden",0 , "text/html");
                 }
 
                 out.write(hr.composeResponse());
@@ -82,13 +83,23 @@ public class ServeTask implements Runnable {
 
     }
 
+    /**
+     * Verifies whether the user is accessing protected data.
+     * @param info
+     * @return
+     */
     private boolean isContentProtected(String[] info) {
-        for (String i : protectedPaths) {
+        // Info contains the password as a queryParam
+        if(info[2] == null)
+            return true;
+
+        for (String i : protectedRoutes) {
             if (i.equalsIgnoreCase(info[0] + info[1])) {
                 return true;
             }
         }
-        return false;
+
+        return !info[2].equals(defaultPassword);
     }
 
     private byte[] composeData(Path path) {
