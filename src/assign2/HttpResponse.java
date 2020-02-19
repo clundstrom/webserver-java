@@ -13,9 +13,18 @@ public class HttpResponse {
     String contentType = "";
     String[] extras;
 
+    public HttpResponse() {
+    }
+
+    public HttpResponse(String statusCode, int contentLength, String contentType) {
+        this.setStatusCode(statusCode);
+        this.setContentLength(contentLength);
+        this.setContentType(contentType);
+    }
 
     /**
      * Composes all header fields into a byte array.
+     *
      * @return byte Byte array of header.
      */
     byte[] composeResponse() {
@@ -28,8 +37,8 @@ public class HttpResponse {
         sb.append(connection + "\r\n");
         sb.append(contentType + "\r\n");
 
-        if(extras != null){
-            for(String s : extras){
+        if (extras != null) {
+            for (String s : extras) {
                 sb.append(s + "\r\n");
             }
         }
@@ -50,13 +59,13 @@ public class HttpResponse {
             contentLength = "Content-Length:" + length;
     }
 
-    void setExtras(String[] extras){
-        if(extras != null){
+    void setExtras(String[] extras) {
+        if (extras != null) {
             this.extras = extras;
         }
     }
 
-    void setStatusCode(String status){
+    void setStatusCode(String status) {
         this.statusCode = status;
     }
 }
