@@ -47,20 +47,24 @@ public class ServeTask implements Runnable {
                 // Verify that content exists
                 if(isContent(Paths.get(info[0]))){
                     data = composeData(Paths.get(info[0]));
-                    hr.setStatusCode("200 OK");
-                    hr.setContentLength(data.length);
-                    hr.setContentType(info[1]);
+                    hr = new HttpResponse("200 OK", data.length ,info[1]);
                 }
                 else{
                     hr = new HttpResponse("404 not found", 0, "text/html");
                 }
 
                 // Verify that content is not protected
-                if(isContentProtected(info)){
+                if(isRouteProtected(info)){
                     hr = new HttpResponse("403 forbidden",0 , "text/html");
                 }
 
-                out.write(hr.composeResponse());
+                // Verify that password is correct
+                if(!defaultPassword.equals(info[2])){
+                    hr.setStatusCode("200 OK");
+                }
+
+
+                out.write(hr.build());
 
                 if(data != null)
                     out.write(data);
@@ -80,7 +84,6 @@ public class ServeTask implements Runnable {
 
     private boolean isContent(Path info) {
         return info.toFile().isFile();
-
     }
 
     /**
@@ -88,18 +91,13 @@ public class ServeTask implements Runnable {
      * @param info
      * @return
      */
-    private boolean isContentProtected(String[] info) {
-        // Info contains the password as a queryParam
-        if(info[2] == null)
-            return true;
-
+    private boolean isRouteProtected(String[] info) {
         for (String i : protectedRoutes) {
             if (i.equalsIgnoreCase(info[0] + info[1])) {
                 return true;
             }
         }
-
-        return !info[2].equals(defaultPassword);
+        return false;
     }
 
     private byte[] composeData(Path path) {

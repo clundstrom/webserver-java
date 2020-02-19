@@ -27,7 +27,7 @@ public class HttpResponse {
      *
      * @return byte Byte array of header.
      */
-    byte[] composeResponse() {
+    byte[] build() {
         StringBuilder sb = new StringBuilder();
         sb.append(version);
         sb.append(statusCode + "\r\n");
