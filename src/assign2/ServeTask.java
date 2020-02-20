@@ -22,7 +22,9 @@ public class ServeTask implements Runnable {
     private byte[] data;
     private String defaultPassword = "1dv701";
     private OutputStream out;
+    private InputStream is;
     private HttpResponse hr;
+
 
     public ServeTask(Socket socket, String path) {
         this.socket = socket;
@@ -38,7 +40,7 @@ public class ServeTask implements Runnable {
             // Create buffer
             var buf = new byte[buffSize];
 
-            InputStream is = socket.getInputStream();
+            is = socket.getInputStream();
             out = socket.getOutputStream();
 
             // Read input
@@ -52,16 +54,21 @@ public class ServeTask implements Runnable {
                 incomingHeader += new String(buf, 0, read);
 
                 // Fetch information about the content requested
-                String[] info = ArgParser.getStaticContentInfo(incomingHeader, defaultPath);
+                String[] info = ArgParser.parseHeader(incomingHeader, defaultPath);
 
                 assert info != null;
-                switch (info[3]){
-                    case "GET": 
+                switch (info[3]) {
+                    case "GET":
                         ProcessGet(info);
-                    case "PUT":
-                        ProcessPost();
+                        break;
                     case "POST":
+                        ProcessPost(incomingHeader);
+                        break;
+                    case "PUT":
                         ProcessPut();
+                        break;
+                    default:
+                        break;
                 }
             }
 
@@ -81,13 +88,16 @@ public class ServeTask implements Runnable {
 
     }
 
-    private void ProcessPost() {
-        
+    private void ProcessPost(String incomingHeader) throws IOException {
+        byte[] data = ArgParser.parseData(incomingHeader, is);
+
+        System.out.println(data.length);
     }
 
 
     /**
      * Processing steps of Get Request
+     *
      * @param info Header information needed.
      * @throws IOException Handle IOException in caller.
      */
@@ -131,6 +141,7 @@ public class ServeTask implements Runnable {
 
     /**
      * Verifies that content actually exists.
+     *
      * @param info
      * @return
      */
@@ -139,13 +150,12 @@ public class ServeTask implements Runnable {
             boolean isValid = Paths.get(info[0]).toFile().isFile();
 
             // If path is a valid file
-            if(isValid){
+            if (isValid) {
                 data = composeData(info);
-                if(data != null){
+                if (data != null) {
                     hr = new HttpResponse("200 OK", data.length, info[1]);
                 }
-            }
-            else{
+            } else {
                 hr = new HttpResponse("404 not found", 0, "text/html");
             }
             return isValid;

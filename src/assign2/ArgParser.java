@@ -1,6 +1,7 @@
 package assign2;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
@@ -43,7 +44,7 @@ public class ArgParser {
      * @param item item to be fetched.
      * @return content file path and file extension
      */
-    static String[] getStaticContentInfo(String item, String defaultPath) {
+    static String[] parseHeader(String item, String defaultPath) {
         try {
             // Split at each CRLF
             String[] parsedHeader = item.split("\r\n");
@@ -59,7 +60,6 @@ public class ArgParser {
 
             // Initialize queryParam for eventual token
             String token = "";
-
 
             if (queries.length > 1) {
                 // Again split at additional queryParameters "&"
@@ -92,7 +92,7 @@ public class ArgParser {
             // Append url
             contentDir += queries[0];
 
-            return new String[]{contentDir, determineContentType(extension), token ,parsedGet[0]};
+            return new String[]{contentDir, determineContentType(extension), token , parsedGet[0]};
         } catch (IndexOutOfBoundsException e ) {
             System.err.println("Could not process header.");
         }
@@ -119,5 +119,28 @@ public class ArgParser {
             System.err.println("Could not read supported content types.");
         }
         return "text/html";
+    }
+
+    public static byte[] parseData(String incomingHeader, InputStream is) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        String[] header = incomingHeader.split("\r\n");
+        String[] data = incomingHeader.split("\r\n\r\n");
+
+        int readLines = 0;
+        String match = "Content-Length: ";
+
+        // Get content length
+        for(String i : header){
+            if(i.startsWith(match)){
+                readLines = Integer.parseInt(i.substring(match.length()));
+            }
+        }
+        int read = 0;
+        for(int i=0; i < readLines; i++){
+            read = is.read();
+            sb.append((char) read);
+        }
+
+        return sb.toString().getBytes();
     }
 }
