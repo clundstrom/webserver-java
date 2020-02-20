@@ -62,13 +62,7 @@ public class ServeTask implements Runnable {
                         ProcessPost();
                     case "POST":
                         ProcessPut();
-
                 }
-
-
-                // Write data to stream
-                if (data != null)
-                    out.write(data);
             }
 
             out.flush();
@@ -76,8 +70,6 @@ public class ServeTask implements Runnable {
 
         } catch (SocketException e) {
             System.err.println("Connection reset by client. Terminating thread " + Thread.currentThread().getName());
-        } catch (InvalidPathException | ArrayIndexOutOfBoundsException e) {
-            System.err.println("Invalid header format.");
         } catch (IOException e) {
             System.err.println("There was an error writing or reading from the stream.");
         } finally {
@@ -93,6 +85,12 @@ public class ServeTask implements Runnable {
         
     }
 
+
+    /**
+     * Processing steps of Get Request
+     * @param info Header information needed.
+     * @throws IOException Handle IOException in caller.
+     */
     private void ProcessGet(String[] info) throws IOException {
         // Verify that content exists
         isContent(info);
@@ -106,6 +104,9 @@ public class ServeTask implements Runnable {
         // Write header to stream
         out.write(hr.build());
 
+        // Write data to stream
+        if (data != null)
+            out.write(data);
     }
 
     /**
@@ -128,6 +129,11 @@ public class ServeTask implements Runnable {
         return false;
     }
 
+    /**
+     * Verifies that content actually exists.
+     * @param info
+     * @return
+     */
     private boolean isContent(String[] info) {
         try {
             boolean isValid = Paths.get(info[0]).toFile().isFile();
