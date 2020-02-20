@@ -77,7 +77,7 @@ public class ArgParser {
 
         // Append with index.html if query ends with /
         if (queries[0].endsWith("/")) {
-            queries[0] += "/index.html";
+            queries[0] += "index.html";
         }
 
         // Get the file extension if there is one.

@@ -6,13 +6,19 @@ import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServeTask implements Runnable {
 
     private Socket socket;
     private int buffSize = 1024;
-    private String defaultPath = "";
-    private String[] protectedRoutes = {"protected.html"};
+    private String defaultPath = "static";
+    private String[] protectedRoutes = {
+            "protected.html"
+    };
+
+    private Map<String, String> movedRoutes = new HashMap<>();
     private byte[] data;
     private String defaultPassword = "1dv701";
 
@@ -24,6 +30,8 @@ public class ServeTask implements Runnable {
 
     @Override
     public void run() {
+        movedRoutes.put("bee.png", "a/b/bee.png");
+
         try {
             // Create buffer
             var buf = new byte[buffSize];
@@ -34,15 +42,17 @@ public class ServeTask implements Runnable {
             // Read input
             int read;
             String incomingHeader = "";
+
             // Read get Request
             while ((read = is.read(buf)) != -1) {
                 HttpResponse hr = new HttpResponse();
 
-                // Add to get request
+                // Read incoming header
                 incomingHeader += new String(buf, 0, read);
 
                 // Fetch information about the content requested
                 String[] info = ArgParser.getStaticContentInfo(incomingHeader, defaultPath);
+
 
                 // Verify that content exists
                 if(isContent(Paths.get(info[0]))){
@@ -53,14 +63,18 @@ public class ServeTask implements Runnable {
                     hr = new HttpResponse("404 not found", 0, "text/html");
                 }
 
+
                 // Verify that content is not protected
                 if(isRouteProtected(info)){
                     hr = new HttpResponse("403 forbidden",0 , "text/html");
                 }
 
-                // Verify that password is correct
-                if(!defaultPassword.equals(info[2])){
-                    hr.setStatusCode("200 OK");
+
+                // Verify that content is not moved
+                String movedUrl = isContentMoved(info[0]);
+                if(movedUrl != null){
+                    hr = new HttpResponse("302 found", 0, info[1]);
+                    hr.extras = new String[]{"Location: " + movedUrl};
                 }
 
 
@@ -82,9 +96,26 @@ public class ServeTask implements Runnable {
         }
     }
 
+    /**
+     * Returns a URL to the new
+     * @param info
+     * @return
+     */
+    private String isContentMoved(String info) {
+
+        for (Map.Entry i : movedRoutes.entrySet()){
+            String compare = defaultPath+"/"+i.getKey();
+            if(info.equalsIgnoreCase(compare)){
+                return i.getValue().toString();
+            }
+        }
+        return null;
+    }
+
     private boolean isContent(Path info) {
         return info.toFile().isFile();
     }
+
 
     /**
      * Verifies whether the user is accessing protected data.
@@ -93,13 +124,23 @@ public class ServeTask implements Runnable {
      */
     private boolean isRouteProtected(String[] info) {
         for (String i : protectedRoutes) {
-            if (i.equalsIgnoreCase(info[0] + info[1])) {
+            String compare = defaultPath+"/"+i;
+            if (compare.equalsIgnoreCase(info[0])) {
+                if(defaultPassword.equals(info[2])){
+                    return false;
+                }
                 return true;
             }
         }
         return false;
     }
 
+
+    /**
+     * Prepares outgoing data by reading it into a byte array.
+     * @param path Path of the data.
+     * @return A byte array.
+     */
     private byte[] composeData(Path path) {
         try {
             byte[] data = Files.readAllBytes(path);
