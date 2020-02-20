@@ -97,9 +97,9 @@ public class ServeTask implements Runnable {
     }
 
     /**
-     * Returns a URL to the new
-     * @param info
-     * @return
+     * Returns a URL to the new content if it has been moved.
+     * @param info Incoming url
+     * @return Outgoing url
      */
     private String isContentMoved(String info) {
 
