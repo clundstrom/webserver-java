@@ -91,7 +91,13 @@ public class ServeTask implements Runnable {
     private void ProcessPost(String incomingHeader) throws IOException {
         byte[] data = ArgParser.parseData(incomingHeader, is);
 
-        System.out.println(data.length);
+        if(data != null){
+            File file = new File("static/uploads/test.png");
+            OutputStream os = new FileOutputStream(file);
+            os.write(data);
+            os.close();
+            out.write(new HttpResponse("200 OK", 0,"text/html").build());
+        }
     }
 
 

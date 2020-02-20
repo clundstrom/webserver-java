@@ -92,8 +92,8 @@ public class ArgParser {
             // Append url
             contentDir += queries[0];
 
-            return new String[]{contentDir, determineContentType(extension), token , parsedGet[0]};
-        } catch (IndexOutOfBoundsException e ) {
+            return new String[]{contentDir, determineContentType(extension), token, parsedGet[0]};
+        } catch (IndexOutOfBoundsException e) {
             System.err.println("Could not process header.");
         }
         return null;
@@ -126,21 +126,26 @@ public class ArgParser {
         String[] header = incomingHeader.split("\r\n");
         String[] data = incomingHeader.split("\r\n\r\n");
 
-        int readLines = 0;
+        int contentLength = 0;
         String match = "Content-Length: ";
 
         // Get content length
-        for(String i : header){
-            if(i.startsWith(match)){
-                readLines = Integer.parseInt(i.substring(match.length()));
+        for (String i : header) {
+            if (i.startsWith(match)) {
+                contentLength = Integer.parseInt(i.substring(match.length()));
             }
         }
+
+        byte[] bytes = new byte[contentLength];
+
         int read = 0;
-        for(int i=0; i < readLines; i++){
-            read = is.read();
-            sb.append((char) read);
+
+        if (data.length > 2) {
+            bytes = data[2].getBytes();
+            return bytes;
         }
 
-        return sb.toString().getBytes();
+
+        return null;
     }
 }
