@@ -92,7 +92,7 @@ public class ArgParser {
             // Append url
             contentDir += queries[0];
 
-            return new String[]{contentDir, determineContentType(extension), token};
+            return new String[]{contentDir, determineContentType(extension), token ,parsedGet[0]};
         } catch (IndexOutOfBoundsException e ) {
             System.err.println("Could not process header.");
         }

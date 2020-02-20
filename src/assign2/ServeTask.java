@@ -5,7 +5,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,29 +45,26 @@ public class ServeTask implements Runnable {
             int read;
             String incomingHeader = "";
 
-            // Read get Request
+            // Read request
             while ((read = is.read(buf)) != -1) {
 
                 // Read incoming header
                 incomingHeader += new String(buf, 0, read);
 
                 // Fetch information about the content requested
-                String[] info = {};
-                info = ArgParser.getStaticContentInfo(incomingHeader, defaultPath);
+                String[] info = ArgParser.getStaticContentInfo(incomingHeader, defaultPath);
 
+                assert info != null;
+                switch (info[3]){
+                    case "GET": 
+                        ProcessGet(info);
+                    case "PUT":
+                        ProcessPost();
+                    case "POST":
+                        ProcessPut();
 
-                // Verify that content exists
-                isContent(info);
+                }
 
-                // Verify that content is not protected
-                isRouteProtected(info);
-
-                // Verify that content is not moved
-                isContentMoved(info);
-
-
-                // Write header to stream
-                out.write(hr.build());
 
                 // Write data to stream
                 if (data != null)
@@ -87,6 +83,29 @@ public class ServeTask implements Runnable {
         } finally {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private void ProcessPut() {
+
+    }
+
+    private void ProcessPost() {
+        
+    }
+
+    private void ProcessGet(String[] info) throws IOException {
+        // Verify that content exists
+        isContent(info);
+
+        // Verify that content is not protected
+        isRouteProtected(info);
+
+        // Verify that content is not moved
+        isContentMoved(info);
+
+        // Write header to stream
+        out.write(hr.build());
+
     }
 
     /**
