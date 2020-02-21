@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Helper class which handles some common argument parsing.
@@ -44,7 +46,7 @@ public class ArgParser {
      * @param item item to be fetched.
      * @return content file path and file extension
      */
-    static String[] parseHeader(String item, String defaultPath) {
+    static ParsedHeader parseHeader(String item, String defaultPath) {
         try {
             // Split at each CRLF
             String[] parsedHeader = item.split("\r\n");
@@ -58,23 +60,12 @@ public class ArgParser {
             // Extract additional params if there are any after "?".
             String[] queries = parsedGet[1].split("\\?");
 
-            // Initialize queryParam for eventual token
-            String token = "";
 
+            // Map Queries
+            Map map = new HashMap();
             if (queries.length > 1) {
-                // Again split at additional queryParameters "&"
-                String[] splitQueries = queries[1].split("&");
-
-                // Iterate over parameters to support multiple.
-                for (int i = 0; i < splitQueries.length; i++) {
-                    String[] splitQueryParams = splitQueries[i].split("=");
-
-                    if (splitQueryParams[0].equalsIgnoreCase("pass")) {
-                        token = splitQueryParams[1];
-                    }
-                }
+                map = mapQueries(queries[1]);
             }
-
 
             // Append with index.html if query ends with /
             if (queries[0].endsWith("/")) {
@@ -92,7 +83,11 @@ public class ArgParser {
             // Append url
             contentDir += queries[0];
 
-            return new String[]{contentDir, determineContentType(extension), token, parsedGet[0]};
+
+            ParsedHeader parsed = new ParsedHeader(parsedGet[0], contentDir, determineContentType(extension), map);
+
+
+            return parsed;
         } catch (IndexOutOfBoundsException e) {
             System.err.println("Could not process header.");
         }
@@ -121,7 +116,7 @@ public class ArgParser {
         return "text/html";
     }
 
-    public static byte[] parseData(String incomingHeader, InputStream is) throws IOException {
+    static byte[] parseData(String incomingHeader, InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();
         String[] header = incomingHeader.split("\r\n");
         String[] data = incomingHeader.split("\r\n\r\n");
@@ -148,4 +143,24 @@ public class ArgParser {
 
         return null;
     }
+
+
+    // Map Queries
+    static Map<String, String> mapQueries(String queries){
+        HashMap<String, String> map = new HashMap();
+
+        if (!queries.isEmpty()) {
+            // Again split at additional queryParameters "&"
+            String[] splitQueries = queries.split("&");
+
+            // Iterate over parameters to support multiple.
+            for (int i = 0; i < splitQueries.length; i++) {
+                String[] splitQueryParams = splitQueries[i].split("=");
+                map.put(splitQueryParams[0], splitQueryParams[1]);
+            }
+        }
+        return map;
+    }
+
+
 }

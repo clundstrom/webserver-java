@@ -47,29 +47,36 @@ public class ServeTask implements Runnable {
             int read;
             String incomingHeader = "";
 
+
+            String[] info = {};
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            StringBuilder sb = new StringBuilder();
             // Read request
-            while ((read = is.read(buf)) != -1) {
+            while (((incomingHeader = in.readLine()) != null)) {
+                sb.append(incomingHeader);
 
-                // Read incoming header
-                incomingHeader += new String(buf, 0, read);
-
-                // Fetch information about the content requested
-                String[] info = ArgParser.parseHeader(incomingHeader, defaultPath);
-
-                assert info != null;
-                switch (info[3]) {
-                    case "GET":
-                        ProcessGet(info);
-                        break;
-                    case "POST":
-                        ProcessPost(incomingHeader);
-                        break;
-                    case "PUT":
-                        ProcessPut();
-                        break;
-                    default:
-                        break;
+                if (incomingHeader.isEmpty()) {
+                    break;
                 }
+            }
+
+            // Fetch information about the content requested
+            ParsedHeader header = ArgParser.parseHeader(sb.toString(), defaultPath);
+
+            assert header != null;
+            switch (header.getRequestType()) {
+                case "GET":
+                    ProcessGet(header);
+                    break;
+                case "POST":
+                    ProcessPost(incomingHeader);
+                    break;
+                case "PUT":
+                    ProcessPut();
+                    break;
+                default:
+                    break;
             }
 
             out.flush();
@@ -91,12 +98,12 @@ public class ServeTask implements Runnable {
     private void ProcessPost(String incomingHeader) throws IOException {
         byte[] data = ArgParser.parseData(incomingHeader, is);
 
-        if(data != null){
+        if (data != null) {
             File file = new File("static/uploads/test.png");
             OutputStream os = new FileOutputStream(file);
             os.write(data);
             os.close();
-            out.write(new HttpResponse("200 OK", 0,"text/html").build());
+            out.write(new HttpResponse("200 OK", 0, "text/html").build());
         }
     }
 
@@ -104,18 +111,18 @@ public class ServeTask implements Runnable {
     /**
      * Processing steps of Get Request
      *
-     * @param info Header information needed.
+     * @param header Header information needed.
      * @throws IOException Handle IOException in caller.
      */
-    private void ProcessGet(String[] info) throws IOException {
+    private void ProcessGet(ParsedHeader header) throws IOException {
         // Verify that content exists
-        isContent(info);
+        isContent(header);
 
         // Verify that content is not protected
-        isRouteProtected(info);
+        isRouteProtected(header);
 
         // Verify that content is not moved
-        isContentMoved(info);
+        isContentMoved(header);
 
         // Write header to stream
         out.write(hr.build());
@@ -128,18 +135,16 @@ public class ServeTask implements Runnable {
     /**
      * Returns a URL to the new content if it has been moved.
      *
-     * @param info Incoming url
+     * @param header parsedHeader
      * @return Outgoing url
      */
-    private boolean isContentMoved(String[] info) {
-        if (info != null) {
-            for (Map.Entry i : redirectedRoutes.entrySet()) {
-                String compare = defaultPath + "/" + i.getKey();
-                if (info[0].equalsIgnoreCase(compare)) {
-                    hr = new HttpResponse("302 found", 0, info[1]);
-                    hr.extras = new String[]{"Location: " + i.getValue().toString()};
-                    return true;
-                }
+    private boolean isContentMoved(ParsedHeader header) {
+        for (Map.Entry i : redirectedRoutes.entrySet()) {
+            String compare = defaultPath + "/" + i.getKey();
+            if (header.getPath().equalsIgnoreCase(compare)) {
+                hr = new HttpResponse("302 found", 0, header.getContentType());
+                hr.extras = new String[]{"Location: " + i.getValue().toString()};
+                return true;
             }
         }
         return false;
@@ -148,18 +153,18 @@ public class ServeTask implements Runnable {
     /**
      * Verifies that content actually exists.
      *
-     * @param info
+     * @param header parsed header information.
      * @return
      */
-    private boolean isContent(String[] info) {
+    private boolean isContent(ParsedHeader header) {
         try {
-            boolean isValid = Paths.get(info[0]).toFile().isFile();
+            boolean isValid = Paths.get(header.getPath()).toFile().isFile();
 
             // If path is a valid file
             if (isValid) {
-                data = composeData(info);
+                data = composeData(header);
                 if (data != null) {
-                    hr = new HttpResponse("200 OK", data.length, info[1]);
+                    hr = new HttpResponse("200 OK", data.length, header.getContentType());
                 }
             } else {
                 hr = new HttpResponse("404 not found", 0, "text/html");
@@ -179,14 +184,14 @@ public class ServeTask implements Runnable {
     /**
      * Verifies whether the user is accessing protected data.
      *
-     * @param info
+     * @param header parsed header info.
      * @return
      */
-    private boolean isRouteProtected(String[] info) {
+    private boolean isRouteProtected(ParsedHeader header) {
         for (String i : protectedRoutes) {
             String compare = defaultPath + "/" + i;
-            if (compare.equalsIgnoreCase(info[0])) {
-                if (defaultPassword.equals(info[2])) {
+            if (compare.equalsIgnoreCase(header.getPath())) {
+                if (header.getQueryParams().containsKey("pass") && header.getQueryParams().get("pass").equals(defaultPassword)) {
                     return false;
                 }
                 hr = new HttpResponse("403 forbidden", 0, "text/html");
@@ -200,12 +205,12 @@ public class ServeTask implements Runnable {
     /**
      * Prepares outgoing data by reading it into a byte array.
      *
-     * @param path Path of the data.
+     * @param header parsed header information.
      * @return A byte array.
      */
-    private byte[] composeData(String[] path) {
+    private byte[] composeData(ParsedHeader header) {
         try {
-            return Files.readAllBytes(Paths.get(path[0]));
+            return Files.readAllBytes(Paths.get(header.getPath()));
         } catch (NullPointerException e) {
             System.err.println("Could not find a path.");
         } catch (IOException e) {
