@@ -48,10 +48,15 @@ public class ServeTask implements Runnable {
             ParsedHeader header = new ParsedHeader();
             // Read request
             int read = 0;
-
             while (((read = is.read(buf)) != -1)) {
                 String lineRead = new String(buf, 0 , read);
                 sb.append(lineRead);
+
+                // First part of header read
+                if (lineRead.contains("\r\n\r\n")) {
+                    System.out.println("Header read.");
+                        break;
+                }
             }
 
             // Fetch information about the content requested
