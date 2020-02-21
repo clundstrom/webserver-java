@@ -100,7 +100,7 @@ public class ServeTask implements Runnable {
                 sb.append(first);
 
                 // 2x CRLF read
-                if(fourth == '\r' && third == '\n' && second == '\r' && first == '\n'){
+                if (fourth == '\r' && third == '\n' && second == '\r' && first == '\n') {
                     System.out.println("Header read.");
                     // Save position in buffer
                     isr.mark(200);
@@ -111,8 +111,7 @@ public class ServeTask implements Runnable {
                 third = second;
                 second = first;
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             System.err.println("Could not read from stream.");
         }
         return sb.toString();
@@ -123,24 +122,31 @@ public class ServeTask implements Runnable {
     }
 
     private void ProcessPost(ParsedHeader header) throws IOException {
-        StringBuilder sb = new StringBuilder();
+
         // Check if there is a payload to read
-        if(header.getContentLength() > 0 && header.getContentBoundary() != null) {
+        if (header.getContentLength() > 0 && header.getContentBoundary() != null) {
 
-            String test = readStringToCRLF(isr);
-
-
+            // Read file details
+            String[] fileInfo = readStringToCRLF(isr).split("\r\n");
+            String match = "filename=";
+            int length = fileInfo[1].lastIndexOf(match);
+            String name = fileInfo[1].substring(length+match.length());
+            char c = '\"';
+            name = name.replaceAll( String.valueOf(c), "");
             byte[] imageData = readBytesToEOF(isr);
 
-
             if (imageData != null) {
-                File file = new File("static/uploads/test.png");
-                var imgInput = new ByteArrayInputStream(imageData);
-                BufferedImage img = ImageIO.read(imgInput);
-
-                ImageIO.write(img, "png", file);
+                File file = new File("static/uploads/"+name);
+                OutputStream fos = new FileOutputStream(file);
+                fos.write(imageData);
+                fos.close();
                 System.out.println("File written");
-                out.write(new HttpResponse("200 OK", 0, "text/html").build());
+                String success = "<h2>File successfully uploaded.</h2>";
+                out.write(new HttpResponse("200 OK", success.length(), "text/html").build());
+                out.write(success.getBytes());
+                out.close();
+            } else {
+                out.write(new HttpResponse("500 Internal Server Error", 0, "text/html").build());
                 out.close();
             }
         }
@@ -157,12 +163,11 @@ public class ServeTask implements Runnable {
         // Read request
         int read = 0;
         try {
-
             while (((read = isr.read()) != -1)) {
                 first = (char) read;
 
                 // 2x CRLF read
-                if(third == '-' && second == '-' && first == '-'){
+                if (third == '-' && second == '-' && first == '-') {
                     System.out.println("Header read.");
                     break;
                 }
@@ -172,11 +177,11 @@ public class ServeTask implements Runnable {
                 third = second;
                 second = first;
             }
-        }
-        catch (IOException e){
+            return aos.toByteArray();
+        } catch (IOException e) {
             System.err.println("Could not read from stream.");
         }
-        return aos.toByteArray();
+        return null;
     }
 
 
