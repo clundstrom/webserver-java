@@ -43,21 +43,17 @@ public class ServeTask implements Runnable {
             is = socket.getInputStream();
             out = socket.getOutputStream();
 
-            // Read input
-            int read;
-            String incomingHeader = "";
-
-
-            String[] info = {};
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             StringBuilder sb = new StringBuilder();
-            // Read request
-            while (((incomingHeader = in.readLine()) != null)) {
-                sb.append(incomingHeader);
 
-                if (incomingHeader.isEmpty()) {
-                    break;
+            // Read request
+            int read = 0;
+            while (((read = is.read(buf)) != -1)) {
+                String lineRead = new String(buf, 0 , read);
+                sb.append(lineRead);
+
+                if (lineRead.contains("\r\n\r\n")) {
+                    System.out.println("eof");
+                        break;
                 }
             }
 
@@ -70,7 +66,7 @@ public class ServeTask implements Runnable {
                     ProcessGet(header);
                     break;
                 case "POST":
-                    ProcessPost(incomingHeader);
+                    ProcessPost(header);
                     break;
                 case "PUT":
                     ProcessPut();
@@ -95,8 +91,11 @@ public class ServeTask implements Runnable {
 
     }
 
-    private void ProcessPost(String incomingHeader) throws IOException {
-        byte[] data = ArgParser.parseData(incomingHeader, is);
+    private void ProcessPost(ParsedHeader header) throws IOException {
+        if(header.getContentLength() > 0){
+            byte[] data = is.readNBytes(header.getContentLength());
+            System.out.println("Data read.");
+        }
 
         if (data != null) {
             File file = new File("static/uploads/test.png");
@@ -104,6 +103,7 @@ public class ServeTask implements Runnable {
             os.write(data);
             os.close();
             out.write(new HttpResponse("200 OK", 0, "text/html").build());
+            out.close();
         }
     }
 
@@ -124,7 +124,7 @@ public class ServeTask implements Runnable {
         // Verify that content is not moved
         isContentMoved(header);
 
-        // Write header to stream
+        // Write response-header to stream
         out.write(hr.build());
 
         // Write data to stream

@@ -48,8 +48,14 @@ public class ArgParser {
      */
     static ParsedHeader parseHeader(String item, String defaultPath) {
         try {
+            //
+            ParsedHeader parsed = new ParsedHeader();
+
             // Split at each CRLF
             String[] parsedHeader = item.split("\r\n");
+
+            // Split at data
+            int contentLength = findContentLength(parsedHeader);
 
             // Split at each space
             String[] parsedGet = parsedHeader[0].split(" ");
@@ -59,6 +65,9 @@ public class ArgParser {
 
             // Extract additional params if there are any after "?".
             String[] queries = parsedGet[1].split("\\?");
+
+
+            // Parse data
 
 
             // Map Queries
@@ -84,7 +93,7 @@ public class ArgParser {
             contentDir += queries[0];
 
 
-            ParsedHeader parsed = new ParsedHeader(parsedGet[0], contentDir, determineContentType(extension), map);
+            parsed = new ParsedHeader(parsedGet[0], contentDir, determineContentType(extension), map, contentLength);
 
 
             return parsed;
@@ -117,28 +126,6 @@ public class ArgParser {
     }
 
     static byte[] parseData(String incomingHeader, InputStream is) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        String[] header = incomingHeader.split("\r\n");
-        String[] data = incomingHeader.split("\r\n\r\n");
-
-        int contentLength = 0;
-        String match = "Content-Length: ";
-
-        // Get content length
-        for (String i : header) {
-            if (i.startsWith(match)) {
-                contentLength = Integer.parseInt(i.substring(match.length()));
-            }
-        }
-
-        byte[] bytes = new byte[contentLength];
-
-        int read = 0;
-
-        if (data.length > 2) {
-            bytes = data[2].getBytes();
-            return bytes;
-        }
 
 
         return null;
@@ -162,5 +149,15 @@ public class ArgParser {
         return map;
     }
 
-
+    static int findContentLength(String[] header){
+        int length = 0;
+        String match ="Content-Length: ";
+        // Get content length
+        for (String i : header) {
+            if (i.startsWith(match)) {
+                length = Integer.parseInt(i.substring(match.length()));
+            }
+        }
+        return length;
+    }
 }
