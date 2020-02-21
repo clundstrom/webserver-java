@@ -12,7 +12,6 @@ public class ParsedHeader {
     private int contentLength;
     private String contentBoundary;
 
-
     public ParsedHeader(String requestType, String path, String contentType, Map queryParams, int contentLength, String contentBoundary) {
         this.requestType = requestType;
         this.path = path;
@@ -75,5 +74,9 @@ public class ParsedHeader {
 
     public int getContentLength() {
         return contentLength;
+    }
+
+    public String getContentBoundary() {
+        return contentBoundary;
     }
 }

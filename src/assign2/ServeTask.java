@@ -45,20 +45,17 @@ public class ServeTask implements Runnable {
 
             StringBuilder sb = new StringBuilder();
 
+            ParsedHeader header = new ParsedHeader();
             // Read request
             int read = 0;
+
             while (((read = is.read(buf)) != -1)) {
                 String lineRead = new String(buf, 0 , read);
                 sb.append(lineRead);
-
-                if (lineRead.contains("\r\n\r\n")) {
-                    System.out.println("eof");
-                        break;
-                }
             }
 
             // Fetch information about the content requested
-            ParsedHeader header = ArgParser.parseHeader(sb.toString(), defaultPath);
+            header = ArgParser.parseHeader(sb.toString(), defaultPath);
 
             assert header != null;
             switch (header.getRequestType()) {
@@ -66,7 +63,7 @@ public class ServeTask implements Runnable {
                     ProcessGet(header);
                     break;
                 case "POST":
-                    ProcessPost(header);
+                    ProcessPost(header, sb.toString());
                     break;
                 case "PUT":
                     ProcessPut();
@@ -91,20 +88,37 @@ public class ServeTask implements Runnable {
 
     }
 
-    private void ProcessPost(ParsedHeader header) throws IOException {
-        if(header.getContentLength() > 0){
-            byte[] data = is.readNBytes(header.getContentLength());
-            System.out.println("Data read.");
+    private void ProcessPost(ParsedHeader header, String rawHeader) throws IOException {
+        // There is a payload to read.
+        if(header.getContentLength() > 0 && header.getContentBoundary() != null) {
+
+            byte[] buf = new byte[buffSize];
+
+            int read = 0;
+            // Read data contents to header
+            while ((read = is.read(buf)) != -1) {
+                String line = new String(buf, 0 , read);
+                rawHeader += line;
+
+                if (line.contains("\r\n")) {
+                   break;
+                }
+            }
+
+            byte image[] = is.readNBytes(header.getContentLength());
+
+
+            if (image != null) {
+                File file = new File("static/uploads/test.png");
+                OutputStream os = new FileOutputStream(file);
+                os.write(image);
+                os.close();
+                System.out.println("File written");
+                out.write(new HttpResponse("200 OK", 0, "text/html").build());
+                out.close();
+            }
         }
 
-        if (data != null) {
-            File file = new File("static/uploads/test.png");
-            OutputStream os = new FileOutputStream(file);
-            os.write(data);
-            os.close();
-            out.write(new HttpResponse("200 OK", 0, "text/html").build());
-            out.close();
-        }
     }
 
 
