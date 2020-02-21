@@ -10,14 +10,16 @@ public class ParsedHeader {
     private String contentType;
     private Map queryParams;
     private int contentLength;
+    private String contentBoundary;
 
 
-    public ParsedHeader(String requestType, String path, String contentType, Map queryParams, int contentLength) {
+    public ParsedHeader(String requestType, String path, String contentType, Map queryParams, int contentLength, String contentBoundary) {
         this.requestType = requestType;
         this.path = path;
         this.contentType = contentType;
         this.queryParams = queryParams;
         this.contentLength = contentLength;
+        this.contentBoundary = contentBoundary;
     }
 
 

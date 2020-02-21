@@ -66,8 +66,7 @@ public class ArgParser {
             // Extract additional params if there are any after "?".
             String[] queries = parsedGet[1].split("\\?");
 
-
-            // Parse data
+            String boundary = findContentBoundary(parsedHeader);
 
 
             // Map Queries
@@ -93,7 +92,7 @@ public class ArgParser {
             contentDir += queries[0];
 
 
-            parsed = new ParsedHeader(parsedGet[0], contentDir, determineContentType(extension), map, contentLength);
+            parsed = new ParsedHeader(parsedGet[0], contentDir, determineContentType(extension), map, contentLength, boundary);
 
 
             return parsed;
@@ -159,5 +158,15 @@ public class ArgParser {
             }
         }
         return length;
+    }
+
+    static String findContentBoundary(String[] header){
+        String match = "Content-Type: multipart/form-data; boundary=";
+        for (String i : header) {
+            if (i.startsWith(match)) {
+                return i.substring(match.length());
+            }
+        }
+        return null;
     }
 }
