@@ -1,5 +1,8 @@
 package assign2;
 
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -24,6 +27,7 @@ public class ServeTask implements Runnable {
     private OutputStream out;
     private InputStream is;
     private HttpResponse hr;
+    private BufferedInputStream isr;
 
 
     public ServeTask(Socket socket, String path) {
@@ -37,30 +41,21 @@ public class ServeTask implements Runnable {
         redirectedRoutes.put("bee.png", "a/b/bee.png");
         // todo: fix infinite /////// to path
         try {
-            // Create buffer
-            var buf = new byte[buffSize];
+            // The header will be read one byte at a time
+            var buf = new byte[1];
 
             is = socket.getInputStream();
             out = socket.getOutputStream();
 
-            StringBuilder sb = new StringBuilder();
-
             ParsedHeader header = new ParsedHeader();
-            // Read request
-            int read = 0;
-            while (((read = is.read(buf)) != -1)) {
-                String lineRead = new String(buf, 0 , read);
-                sb.append(lineRead);
 
-                // First part of header read
-                if (lineRead.contains("\r\n\r\n")) {
-                    System.out.println("Header read.");
-                        break;
-                }
-            }
+            isr = new BufferedInputStream(is);
+
+            // Read raw header
+            String raw = readStringToCRLF(isr);
 
             // Fetch information about the content requested
-            header = ArgParser.parseHeader(sb.toString(), defaultPath);
+            header = ArgParser.parseHeader(raw, defaultPath);
 
             assert header != null;
             switch (header.getRequestType()) {
@@ -68,7 +63,7 @@ public class ServeTask implements Runnable {
                     ProcessGet(header);
                     break;
                 case "POST":
-                    ProcessPost(header, sb.toString());
+                    ProcessPost(header);
                     break;
                 case "PUT":
                     ProcessPut();
@@ -89,41 +84,99 @@ public class ServeTask implements Runnable {
         }
     }
 
+    private String readStringToCRLF(BufferedInputStream isr) {
+        StringBuilder sb = new StringBuilder();
+
+        char fourth = ' ';
+        char third = ' ';
+        char second = ' ';
+        char first = ' ';
+
+        // Read request
+        int read = 0;
+        try {
+            while (((read = isr.read()) != -1)) {
+                first = (char) read;
+                sb.append(first);
+
+                // 2x CRLF read
+                if(fourth == '\r' && third == '\n' && second == '\r' && first == '\n'){
+                    System.out.println("Header read.");
+                    // Save position in buffer
+                    isr.mark(200);
+                    break;
+                }
+                // Reorder last 4 bytes.
+                fourth = third;
+                third = second;
+                second = first;
+            }
+        }
+        catch (IOException e){
+            System.err.println("Could not read from stream.");
+        }
+        return sb.toString();
+    }
+
     private void ProcessPut() {
 
     }
 
-    private void ProcessPost(ParsedHeader header, String rawHeader) throws IOException {
-        // There is a payload to read.
+    private void ProcessPost(ParsedHeader header) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        // Check if there is a payload to read
         if(header.getContentLength() > 0 && header.getContentBoundary() != null) {
 
-            byte[] buf = new byte[buffSize];
-
-            int read = 0;
-            // Read data contents to header
-            while ((read = is.read(buf)) != -1) {
-                String line = new String(buf, 0 , read);
-                rawHeader += line;
-
-                if (line.contains("\r\n")) {
-                   break;
-                }
-            }
-
-            byte image[] = is.readNBytes(header.getContentLength());
+            String test = readStringToCRLF(isr);
 
 
-            if (image != null) {
+            byte[] imageData = readBytesToEOF(isr);
+
+
+            if (imageData != null) {
                 File file = new File("static/uploads/test.png");
-                OutputStream os = new FileOutputStream(file);
-                os.write(image);
-                os.close();
+                var imgInput = new ByteArrayInputStream(imageData);
+                BufferedImage img = ImageIO.read(imgInput);
+
+                ImageIO.write(img, "png", file);
                 System.out.println("File written");
                 out.write(new HttpResponse("200 OK", 0, "text/html").build());
                 out.close();
             }
         }
 
+    }
+
+    private byte[] readBytesToEOF(BufferedInputStream isr) {
+        ByteArrayOutputStream aos = new ByteArrayOutputStream();
+
+        char third = ' ';
+        char second = ' ';
+        char first = ' ';
+
+        // Read request
+        int read = 0;
+        try {
+
+            while (((read = isr.read()) != -1)) {
+                first = (char) read;
+
+                // 2x CRLF read
+                if(third == '-' && second == '-' && first == '-'){
+                    System.out.println("Header read.");
+                    break;
+                }
+                aos.write(read);
+
+                // Reorder last 3 bytes.
+                third = second;
+                second = first;
+            }
+        }
+        catch (IOException e){
+            System.err.println("Could not read from stream.");
+        }
+        return aos.toByteArray();
     }
 
 
