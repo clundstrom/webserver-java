@@ -15,7 +15,6 @@ import java.util.Map;
 public class ServeTask implements Runnable {
 
     private Socket socket;
-    private int buffSize = 1024;
     private String defaultPath;
     private String[] protectedRoutes = {
             "protected.html"
@@ -41,9 +40,6 @@ public class ServeTask implements Runnable {
         redirectedRoutes.put("bee.png", "a/b/bee.png");
         // todo: fix infinite /////// to path
         try {
-            // The header will be read one byte at a time
-            var buf = new byte[1];
-
             is = socket.getInputStream();
             out = socket.getOutputStream();
 
@@ -128,13 +124,12 @@ public class ServeTask implements Runnable {
 
             // Read file details
             String[] fileInfo = readStringToCRLF(isr).split("\r\n");
-            String match = "filename=";
-            int length = fileInfo[1].lastIndexOf(match);
-            String name = fileInfo[1].substring(length+match.length());
-            char c = '\"';
-            name = name.replaceAll( String.valueOf(c), "");
-            byte[] imageData = readBytesToEOF(isr);
-
+            String name = findName(fileInfo);
+            byte[] temp = readBytesToEOF(isr);
+            byte[] imageData = new byte[temp.length-4];
+            System.arraycopy(temp, 0, imageData,0, imageData.length-4);
+            
+            // Writes data to file
             if (imageData != null) {
                 File file = new File("static/uploads/"+name);
                 OutputStream fos = new FileOutputStream(file);
@@ -151,6 +146,15 @@ public class ServeTask implements Runnable {
             }
         }
 
+    }
+
+    private String findName(String[] fileInfo) {
+        String match = "filename=";
+        int length = fileInfo[1].lastIndexOf(match);
+        String name = fileInfo[1].substring(length+match.length());
+        char c = '\"';
+        name = name.replaceAll( String.valueOf(c), "");
+        return name;
     }
 
     private byte[] readBytesToEOF(BufferedInputStream isr) {
