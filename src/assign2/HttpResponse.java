@@ -13,9 +13,6 @@ public class HttpResponse {
     String contentType = "";
     String[] extras;
 
-    public HttpResponse() {
-    }
-
     public HttpResponse(String statusCode, int contentLength, String contentType) {
         this.setStatusCode(statusCode);
         this.setContentLength(contentLength);

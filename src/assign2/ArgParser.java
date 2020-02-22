@@ -1,9 +1,7 @@
 package assign2;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +30,11 @@ public class ArgParser {
         return 0;
     }
 
+
+    /**
+     * Verifies that user supplied needed arguments.
+     * @param args
+     */
     static void verifyArguments(String[] args) {
         // Handle mandatory arguments
         if (args.length < 2) {
@@ -40,15 +43,15 @@ public class ArgParser {
         }
     }
 
+
     /**
-     * Fetches content from static path.
+     * Parses incoming raw header to a workable Header file.
      *
-     * @param item item to be fetched.
-     * @return content file path and file extension
+     * @param item raw header string
+     * @return header
      */
     static ParsedHeader parseHeader(String item, String defaultPath) {
         try {
-            //
             ParsedHeader parsed = new ParsedHeader();
 
             // Split at each CRLF
@@ -66,6 +69,7 @@ public class ArgParser {
             // Extract additional params if there are any after "?".
             String[] queries = parsedGet[1].split("\\?");
 
+            // Extract content type boundary
             String boundary = findContentBoundary(parsedHeader);
 
 
@@ -91,11 +95,7 @@ public class ArgParser {
             // Append url
             contentDir += queries[0];
 
-
-            parsed = new ParsedHeader(parsedGet[0], contentDir, determineContentType(extension), map, contentLength, boundary);
-
-
-            return parsed;
+            return new ParsedHeader(parsedGet[0], contentDir, determineContentType(extension), map, contentLength, boundary);
         } catch (IndexOutOfBoundsException e) {
             System.err.println("Could not process header.");
         }
@@ -124,14 +124,12 @@ public class ArgParser {
         return "text/html";
     }
 
-    static byte[] parseData(String incomingHeader, InputStream is) throws IOException {
 
-
-        return null;
-    }
-
-
-    // Map Queries
+    /**
+     * Maps queries and query-parameters to Key/value pairs
+     * @param queries Raw string of queries
+     * @return Map of query/params
+     */
     static Map<String, String> mapQueries(String queries){
         HashMap<String, String> map = new HashMap();
 
@@ -148,6 +146,12 @@ public class ArgParser {
         return map;
     }
 
+
+    /**
+     * Extracts Content-length from header.
+     * @param header Split header
+     * @return Size in Int
+     */
     static int findContentLength(String[] header){
         int length = 0;
         String match ="Content-Length: ";
@@ -160,6 +164,12 @@ public class ArgParser {
         return length;
     }
 
+
+    /**
+     * Extracts content boundary from header.
+     * @param header Split header
+     * @return String
+     */
     static String findContentBoundary(String[] header){
         String match = "Content-Type: multipart/form-data; boundary=";
         for (String i : header) {
