@@ -140,16 +140,29 @@ public class ServeTask implements Runnable {
 
         if (header.getContentLength() > 0 && validPath) {
             try {
-                // Read file byte-data
+
+                // Read payload data
                 String test = readStringToCRLF(isr, header.getContentLength());
+
+                // Open file at location
                 File file = new File(header.getPath());
+                boolean fileCreated = !file.exists();
                 OutputStream fos = new FileOutputStream(file);
 
-                // Write to stream.
+                // Write to stream
                 fos.write(test.getBytes());
                 fos.close();
-                out.write(new HttpResponse("200 OK", 0,"text/html").build());
-                System.out.println(test.getBytes().length + " written to " + header.getPath());
+
+                String response = test.getBytes().length + " bytes written to " + header.getPath()+ "\n";
+
+                if(fileCreated){
+                    out.write(new HttpResponse("201 Created", response.length(),"text/html").build());
+                }
+                else {
+                    out.write(new HttpResponse("200 OK", response.length(),"text/html").build());
+                }
+                out.write(response.getBytes());
+                System.out.println(test.getBytes().length + " bytes written to " + header.getPath());
             } catch (IOException e) {
                 System.err.println("There was an error writing to file.");
             }
@@ -183,7 +196,7 @@ public class ServeTask implements Runnable {
 
             // Write data to file
             if (imageData != null) {
-                File file = new File("static/uploads/" + name);
+                File file = new File(defaultPath+"/uploads/" + name);
                 OutputStream fos = new FileOutputStream(file);
                 fos.write(imageData);
                 fos.close();
@@ -192,7 +205,7 @@ public class ServeTask implements Runnable {
 
                 // Return 201 created and location.
                 HttpResponse response = new HttpResponse("201 Created", success.length(), "text/html");
-                response.extras = new String[]{"Location: /static/uploads/" + name};
+                response.extras = new String[]{"Location: "+defaultPath+"/uploads/" + name};
 
                 // Write header
                 out.write(response.build());

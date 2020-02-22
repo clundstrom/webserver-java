@@ -16,3 +16,4 @@ application/zip
 application/json
 audio/mpeg
 audio/x-wav
+multipart/form-data
