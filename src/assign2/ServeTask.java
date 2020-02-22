@@ -34,6 +34,7 @@ public class ServeTask implements Runnable {
 
     @Override
     public void run() {
+        // Register bee.png as moved
         redirectedRoutes.put("bee.png", "a/b/bee.png");
 
         try {
