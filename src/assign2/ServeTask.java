@@ -142,7 +142,7 @@ public class ServeTask implements Runnable {
             try {
 
                 // Read payload data
-                String test = readStringToCRLF(isr, header.getContentLength());
+                String receivedPayload = readStringToCRLF(isr, header.getContentLength());
 
                 // Open file at location
                 File file = new File(header.getPath());
@@ -150,10 +150,10 @@ public class ServeTask implements Runnable {
                 OutputStream fos = new FileOutputStream(file);
 
                 // Write to stream
-                fos.write(test.getBytes());
+                fos.write(receivedPayload.getBytes());
                 fos.close();
 
-                String response = test.getBytes().length + " bytes written to " + header.getPath()+ "\n";
+                String response = receivedPayload.getBytes().length + " bytes written to " + header.getPath()+ "\n";
 
                 if(fileCreated){
                     out.write(new HttpResponse("201 Created", response.length(),"text/html").build());
@@ -162,7 +162,7 @@ public class ServeTask implements Runnable {
                     out.write(new HttpResponse("200 OK", response.length(),"text/html").build());
                 }
                 out.write(response.getBytes());
-                System.out.println(test.getBytes().length + " bytes written to " + header.getPath());
+                System.out.println(receivedPayload.getBytes().length + " bytes written to " + header.getPath());
             } catch (IOException e) {
                 System.err.println("There was an error writing to file.");
             }
