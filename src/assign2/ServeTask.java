@@ -205,7 +205,7 @@ public class ServeTask implements Runnable {
 
                 // Return 201 created and location.
                 HttpResponse response = new HttpResponse("201 Created", success.length(), "text/html");
-                response.extras = new String[]{"Location: "+defaultPath+"/uploads/" + name};
+                response.setExtras(new String[]{"Location: "+defaultPath+"/uploads/" + name});
 
                 // Write header
                 out.write(response.build());
@@ -312,7 +312,7 @@ public class ServeTask implements Runnable {
             String compare = defaultPath + "/" + i.getKey();
             if (header.getPath().equalsIgnoreCase(compare)) {
                 hr = new HttpResponse("302 found", 0, header.getContentType());
-                hr.extras = new String[]{"Location: " + i.getValue().toString()};
+                hr.setExtras(new String[]{"Location: " + i.getValue().toString()});
                 return true;
             }
         }

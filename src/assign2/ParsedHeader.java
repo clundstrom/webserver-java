@@ -4,7 +4,6 @@ import java.util.Map;
 
 public class ParsedHeader {
 
-    private byte[] data;
     private String requestType;
     private String path;
     private String contentType;
@@ -66,15 +65,10 @@ public class ParsedHeader {
     }
 
 
-    public void getData() {
-    }
-    public void setData(byte[] data){
-        this.data = data;
-    }
-
     public int getContentLength() {
         return contentLength;
     }
+
 
     public String getContentBoundary() {
         return contentBoundary;
