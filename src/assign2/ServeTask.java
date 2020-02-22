@@ -1,8 +1,5 @@
 package assign2;
 
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageOutputStream;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -48,10 +45,13 @@ public class ServeTask implements Runnable {
             isr = new BufferedInputStream(is);
 
             // Read raw header
-            String raw = readStringToCRLF(isr);
+            String raw = readStringToCRLF(isr, 0);
 
             // Parses raw header to header class.
             header = ArgParser.parseHeader(raw, defaultPath);
+
+            // Mark the stream after the header to not lose payload
+            isr.mark(200);
 
             // Decision tree based on request TYPE
             assert header != null;
@@ -63,7 +63,7 @@ public class ServeTask implements Runnable {
                     ProcessPost(header);
                     break;
                 case "PUT":
-                    ProcessPut();
+                    ProcessPut(header);
                     break;
                 default:
                     break;
@@ -84,10 +84,11 @@ public class ServeTask implements Runnable {
 
     /**
      * Reads a stream to a String until the stream hits carriage return line feed twice.
+     *
      * @param isr Stream
      * @return Concatenated string results.
      */
-    private String readStringToCRLF(BufferedInputStream isr) {
+    private String readStringToCRLF(BufferedInputStream isr, int readBytes) {
         StringBuilder sb = new StringBuilder();
 
         char fourth = ' ';
@@ -95,15 +96,22 @@ public class ServeTask implements Runnable {
         char second = ' ';
         char first = ' ';
 
+        int readNBytes = 0;
+
         // Read request
         int read = 0;
         try {
             while (((read = isr.read()) != -1)) {
                 first = (char) read;
                 sb.append(first);
+                readNBytes++;
 
                 // 2x CRLF read
                 if (fourth == '\r' && third == '\n' && second == '\r' && first == '\n') {
+                    break;
+                }
+
+                if (readBytes != 0 && readNBytes == readBytes) {
                     break;
                 }
 
@@ -118,15 +126,42 @@ public class ServeTask implements Runnable {
         return sb.toString();
     }
 
-    private void ProcessPut() {
+    /**
+     * Processes the request and reads content of request to specified path.
+     *
+     * NOTE: FOR SAFETY REASONS THIS IS LIMITED TO ONLY UPDATE.TXT.
+     * WE WOULD NOT WANT TO OVERWRITE ANYTHING ELSE.
+     *
+     * @param header
+     */
+    private void ProcessPut(ParsedHeader header) {
+        String path = header.getPath().toString();
+        boolean validPath = path.equals(defaultPath+"/update.txt");
 
+        if (header.getContentLength() > 0 && validPath) {
+            try {
+                // Read file byte-data
+                String test = readStringToCRLF(isr, header.getContentLength());
+                File file = new File(header.getPath());
+                OutputStream fos = new FileOutputStream(file);
+
+                // Write to stream.
+                fos.write(test.getBytes());
+                fos.close();
+                out.write(new HttpResponse("200 OK", 0,"text/html").build());
+                System.out.println(test.getBytes().length + " written to " + header.getPath());
+            } catch (IOException e) {
+                System.err.println("There was an error writing to file.");
+            }
+        }
     }
 
 
     /**
      * Handles processing of a POST requests.
-     *
+     * <p>
      * Parses relevant information from the payload fields and saves eventual data to file.
+     *
      * @param header Incoming POST request-header
      * @throws IOException
      */
@@ -136,19 +171,19 @@ public class ServeTask implements Runnable {
         if (header.getContentLength() > 0 && header.getContentBoundary() != null) {
 
             // Read file details
-            String[] fileInfo = readStringToCRLF(isr).split("\r\n");
+            String[] fileInfo = readStringToCRLF(isr, 0).split("\r\n");
             String name = findName(fileInfo);
 
             // Read file byte-data
-            byte[] temp = readBytesToEOF(isr);
+            byte[] temp = readBytesToEOF(isr, '-');
 
             // Trim trailing boundary characters "---"
-            byte[] imageData = new byte[temp.length-4];
-            System.arraycopy(temp, 0, imageData,0, imageData.length-4);
-            
+            byte[] imageData = new byte[temp.length - 4];
+            System.arraycopy(temp, 0, imageData, 0, imageData.length - 4);
+
             // Write data to file
             if (imageData != null) {
-                File file = new File("static/uploads/"+name);
+                File file = new File("static/uploads/" + name);
                 OutputStream fos = new FileOutputStream(file);
                 fos.write(imageData);
                 fos.close();
@@ -157,7 +192,7 @@ public class ServeTask implements Runnable {
 
                 // Return 201 created and location.
                 HttpResponse response = new HttpResponse("201 Created", success.length(), "text/html");
-                response.extras = new String[]{"Location: /static/uploads/"+name};
+                response.extras = new String[]{"Location: /static/uploads/" + name};
 
                 // Write header
                 out.write(response.build());
@@ -177,25 +212,27 @@ public class ServeTask implements Runnable {
 
     /**
      * Finds a fileName in a payload header.
+     *
      * @param fileInfo Payload header
      * @return Name of file.
      */
     private String findName(String[] fileInfo) {
         String match = "filename=";
         int length = fileInfo[1].lastIndexOf(match);
-        String name = fileInfo[1].substring(length+match.length());
+        String name = fileInfo[1].substring(length + match.length());
         char c = '\"';
-        name = name.replaceAll( String.valueOf(c), "");
+        name = name.replaceAll(String.valueOf(c), "");
         return name;
     }
 
 
     /**
      * Reads stream to byte data until it hits trailing boundary chars of payload "---".
+     *
      * @param isr Buffered stream
      * @return Byte data of file
      */
-    private byte[] readBytesToEOF(BufferedInputStream isr) {
+    private byte[] readBytesToEOF(BufferedInputStream isr, char StopAt) {
         ByteArrayOutputStream aos = new ByteArrayOutputStream();
 
         char third = ' ';
@@ -209,7 +246,7 @@ public class ServeTask implements Runnable {
                 first = (char) read;
 
                 // 2x CRLF read
-                if (third == '-' && second == '-' && first == '-') {
+                if (third == StopAt && second == StopAt && first == StopAt) {
                     System.out.println("Header read.");
                     break;
                 }
