@@ -1,7 +1,8 @@
 package assign3;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 
 public class TFTPServer {
     public static final int TFTPPORT = 69;
@@ -9,11 +10,11 @@ public class TFTPServer {
     public static final String READDIR = "static/"; //custom address at your PC
     public static final String WRITEDIR = "static/"; //custom address at your PC
     // OP codes
-    public static final int OP_RRQ = 1; // read request
-    public static final int OP_WRQ = 2; // write request
-    public static final int OP_DAT = 3; // data
-    public static final int OP_ACK = 4; // ack
-    public static final int OP_ERR = 5; // error
+    public static final short OP_RRQ = 1; // read request
+    public static final short OP_WRQ = 2; // write request
+    public static final short OP_DAT = 3; // data
+    public static final short OP_ACK = 4; // ack
+    public static final short OP_ERR = 5; // error
 
     public static void main(String[] args) {
         if (args.length > 0) {
@@ -79,6 +80,8 @@ public class TFTPServer {
                         sendSocket.close();
                     } catch (SocketException e) {
                         e.printStackTrace();
+                    } catch (IOException e) {
+                        System.err.println("There was an error reading or writing to file.");
                     }
                 }
             }.start();
@@ -103,8 +106,8 @@ public class TFTPServer {
             System.err.println("There was an error receiving packets.");
         }
 
+        // Get address of client
         InetSocketAddress addr = new InetSocketAddress(socket.getInetAddress(), 69);
-        // Return remote address and port
         return addr;
     }
 
@@ -116,9 +119,13 @@ public class TFTPServer {
      * @return opcode (request type: RRQ or WRQ)
      */
     private int ParseRQ(byte[] buf, StringBuffer requestedFile) {
-    	requestedFile.append(parseToNullTermination(buf, 2));
+        requestedFile.append(parseToNullTermination(buf, 2));
 
-    	return buf[1];
+        // Get short from request
+        ByteBuffer wrap = ByteBuffer.wrap(buf);
+        short opcode = wrap.getShort();
+
+        return opcode;
     }
 
     /**
@@ -128,12 +135,65 @@ public class TFTPServer {
      * @param requestedFile (name of file to read/write)
      * @param opcode        (RRQ or WRQ)
      */
-    private void HandleRQ(DatagramSocket sendSocket, String requestedFile, int opcode) {
+    private void HandleRQ(DatagramSocket sendSocket, String requestedFile, int opcode) throws IOException {
         if (opcode == OP_RRQ) {
             // See "TFTP Formats" in TFTP specification for the DATA and ACK packet contents
             //boolean result = send_DATA_receive_ACK(params);
-			//sendFile(socket, file);
-			awaitAck();
+            //sendFile(socket, file);
+            File file = new File(requestedFile);
+
+            // Create packet - set block number and opcode_data
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            FileInputStream fi = new FileInputStream(file);
+
+
+            // Read all bytes
+            baos.write(fi.readAllBytes());
+
+
+            byte[] test = new byte[12];
+
+            ByteBuffer bb = ByteBuffer.allocate(512);
+
+            byte[] data = baos.toByteArray();
+
+            // Calculate
+            int numBlocks = (data.length / 512) + 1;
+            int remainingBlock = data.length % 512;
+
+            //for(int i= 1; i < numBlocks; i++){
+
+            // Put OPCODE
+            bb.putShort(OP_DAT);
+
+            // Put BLOCK nr
+            bb.putShort((short) 1);
+
+            // Read data to Bytebuffer
+            bb.put(baos.toByteArray());
+
+            byte[] embed = bb.array();
+
+
+            SocketAddress remote = new InetSocketAddress(sendSocket.getLocalAddress(), sendSocket.getPort());
+            DatagramPacket send = new DatagramPacket(embed, embed.length, remote);
+
+            // Send packet
+            System.out.println("Port: " + sendSocket.getPort());
+            System.out.println(sendSocket.getLocalPort());
+
+            sendSocket.send(send);
+
+
+            // Ack is 4 bytes
+            byte[] ackBuf = new byte[4];
+            DatagramPacket receive = new DatagramPacket(ackBuf, 4);
+            // Await response
+            sendSocket.receive(receive);
+            //}
+
+            awaitAck();
         } else if (opcode == OP_WRQ) {
             //boolean result = receive_DATA_send_ACK(params);
         } else {
@@ -159,33 +219,31 @@ public class TFTPServer {
 //    }
 
 
+    String parseToNullTermination(byte[] buf, int offset) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = offset; i < buf.length; i++) {
+            if ((char) buf[i] == '\0') break;
+
+            sb.append((char) buf[i]);
+        }
+        return sb.toString();
+    }
+
+    boolean sendFile(DatagramSocket dest, String file) throws IOException {
+        //DatagramPacket packet = new DatagramPacket(null);
+        // Read file to buffer
+
+        // Send buffer as packet
 
 
-	String parseToNullTermination(byte[] buf, int offset){
-		StringBuilder sb = new StringBuilder();
-		for(int i =offset; i < buf.length; i++){
-			if((char)buf[i] == '\0') break;
-
-			sb.append((char)buf[i]);
-		}
-		return sb.toString();
-	}
-
-	boolean sendFile(DatagramSocket dest, String file) throws IOException {
-		//DatagramPacket packet = new DatagramPacket(null);
-		// Read file to buffer
-
-		// Send buffer as packet
-
-
-		//dest.send(packet);
+        //dest.send(packet);
         return true;
-	}
+    }
 
-	boolean awaitAck(){
+    boolean awaitAck() {
 
-		return true;
-	}
+        return true;
+    }
 }
 
 
