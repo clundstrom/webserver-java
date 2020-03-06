@@ -97,18 +97,17 @@ public class TFTPServer {
      */
     private InetSocketAddress receiveFrom(DatagramSocket socket, byte[] buf) {
         // Create datagram packet
-        DatagramPacket packet = new DatagramPacket(buf, buf.length);
+        DatagramPacket incoming = new DatagramPacket(buf, buf.length);
 
         // Receive packet
         try {
-            socket.receive(packet);
+            socket.receive(incoming);
         } catch (IOException e) {
             System.err.println("There was an error receiving packets.");
         }
 
-        // Get address of client
-        InetSocketAddress addr = new InetSocketAddress(socket.getInetAddress(), 69);
-        return addr;
+        // Return address of client
+        return new InetSocketAddress(incoming.getAddress(), incoming.getPort());
     }
 
     /**
@@ -154,9 +153,10 @@ public class TFTPServer {
 
             byte[] test = new byte[12];
 
-            ByteBuffer bb = ByteBuffer.allocate(512);
-
             byte[] data = baos.toByteArray();
+
+            // allocate for data length + 4 bytes for header
+            ByteBuffer bb = ByteBuffer.allocate(data.length+4);
 
             // Calculate
             int numBlocks = (data.length / 512) + 1;
@@ -175,20 +175,16 @@ public class TFTPServer {
 
             byte[] embed = bb.array();
 
+            DatagramPacket send = new DatagramPacket(embed, embed.length);
 
-            SocketAddress remote = new InetSocketAddress(sendSocket.getLocalAddress(), sendSocket.getPort());
-            DatagramPacket send = new DatagramPacket(embed, embed.length, remote);
-
-            // Send packet
-            System.out.println("Port: " + sendSocket.getPort());
-            System.out.println(sendSocket.getLocalPort());
-
+            // Send  packet
             sendSocket.send(send);
 
 
             // Ack is 4 bytes
             byte[] ackBuf = new byte[4];
             DatagramPacket receive = new DatagramPacket(ackBuf, 4);
+
             // Await response
             sendSocket.receive(receive);
             //}
