@@ -187,7 +187,13 @@ public class TFTPServer {
 
             // Await response
             sendSocket.receive(receive);
-            //}
+            //
+            ByteBuffer ack = ByteBuffer.wrap(ackBuf);
+
+
+
+            short op = ack.getShort(0);
+            short block = ack.getShort(2);
 
             awaitAck();
         } else if (opcode == OP_WRQ) {
