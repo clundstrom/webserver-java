@@ -162,7 +162,7 @@ public class TFTPServer {
 
 
     /**
-     * Improvised state machine used as a
+     * Improvised state machine used as a timeout handler.
      * @param sendResponse
      * @param receive
      * @param timeoutMillis
@@ -178,13 +178,18 @@ public class TFTPServer {
             sendResponse.run();
 
             // Wait for response
+            receive.call();
             boolean ackReceived = receive.call();
             if(ackReceived )  System.out.println("Ack received..");
 
             // If ack is not received - resend packet 3 times at each timeout
-            while (!ackReceived && System.currentTimeMillis() - start == timeoutMillis && numTries < MAX_TRIES) {
+
+            // medans ej ack OCH tid är mer än timeout OCH försök mindre än MAX
+            while (!ackReceived && System.currentTimeMillis() - start > timeoutMillis && numTries < MAX_TRIES) {
+                // Waiting for ACK
                 start = System.currentTimeMillis();
                 sendResponse.run();
+                ackReceived = receive.call();
                 numTries++;
                 System.out.println("Request timeout.." + numTries);
             }
