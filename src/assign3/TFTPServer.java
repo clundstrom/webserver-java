@@ -143,12 +143,12 @@ public class TFTPServer {
 
             var blockList = blockify(data, 512);
             for (int i = 0; i < blockList.size(); i++) {
-                int blockNum = i;
-                await(() -> sendData(sendSocket, blockList.get(blockNum), blockNum), () -> processAck(sendSocket, opcode, blockNum), 500);
+                int blockNum = i+1;
+                int listNumber = i;
+                await(() -> sendData(sendSocket, blockList.get(listNumber), blockNum), () -> processAck(sendSocket, opcode, blockNum), 500);
             }
 
         } else if (opcode == OP_WRQ) {
-
             // Ack + Receive
             processAck(sendSocket, opcode, 1);
             receiveData(sendSocket);
@@ -190,6 +190,7 @@ public class TFTPServer {
             }
         }
         catch (Exception e){
+            e.printStackTrace();
             System.err.println("There was an error retrieving results from callable.");
         }
     }
