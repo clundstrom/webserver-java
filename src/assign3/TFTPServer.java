@@ -5,6 +5,8 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class TFTPServer {
     public static final int TFTPPORT = 69;
@@ -121,11 +123,8 @@ public class TFTPServer {
      */
     private int ParseRQ(byte[] buf, StringBuffer requestedFile) {
         requestedFile.append(parseToNullTermination(buf, 2, '\0'));
-
-        // Get short from request
         ByteBuffer wrap = ByteBuffer.wrap(buf);
         short opcode = wrap.getShort();
-
         return opcode;
     }
 
@@ -137,10 +136,28 @@ public class TFTPServer {
      * @param opcode        (RRQ or WRQ)
      */
     private void HandleRQ(DatagramSocket sendSocket, String requestedFile, short opcode) throws IOException {
-        if (opcode == OP_RRQ || opcode == OP_WRQ) {
+        if (opcode == OP_RRQ) {
 
-            boolean dataProcessed = processData(sendSocket, requestedFile, opcode);
+            byte[] data = Files.readAllBytes(Paths.get(requestedFile));
+
+            var blockList = blockify(data, 512);
+
+            for(int i =0; i < blockList.size(); i++){
+                sendData(sendSocket, blockList.get(i), opcode);
+                processAck(sendSocket, opcode, i);
+            }
+
+            // Wait for Ack
+            // ackReceived false?
+            long wait = System.currentTimeMillis();
             boolean ackReceived = processAck(sendSocket, opcode, 1);
+
+
+        } else if (opcode == OP_WRQ) {
+
+            // Ack + Receive
+            processAck(sendSocket, opcode, 1);
+            receiveData(sendSocket);
 
         } else {
             System.err.println("Invalid request. Sending an error packet.");
@@ -149,10 +166,29 @@ public class TFTPServer {
         }
     }
 
+    public ArrayList<byte[]> blockify(byte[] data, int blockSize){
+        ArrayList<byte[]> blockList = new ArrayList<>();
+        int numBlocks = (data.length / blockSize);
+        int lastBlockSize = data.length % blockSize;
+
+
+        if(data.length <= blockSize){
+            blockList.add(data);
+            return blockList;
+        }
+
+        for(int i =0; i < numBlocks; i++){
+            blockList.add(Arrays.copyOfRange(data,i*blockSize, (i+1)*blockSize));
+        }
+        blockList.add(Arrays.copyOfRange(data,numBlocks*512, numBlocks*512+lastBlockSize));
+        return blockList;
+    }
+
 
     /**
      * Parses a byte array until terminator char is found.
-     * @param buf Byte array to parse.
+     *
+     * @param buf    Byte array to parse.
      * @param offset Start with an offset.
      * @return A parsed String.
      */
@@ -168,52 +204,29 @@ public class TFTPServer {
 
     /**
      * Function which parses data. Either it receives or sends data from a socket.
-     * @param sendSocket socket to send and receive from
-     * @param requestedFile Data that is requested
+     *
+     * @param sendSocket    socket to send and receive from
+     * @param data Data that is requested
      * @return result
      */
-    boolean processData(DatagramSocket sendSocket, String requestedFile, short opcode) {
+    boolean sendData(DatagramSocket sendSocket, byte[] data, int blockNr) {
         try {
-            if(opcode == OP_RRQ){
-                byte[] data = Files.readAllBytes(Paths.get(requestedFile));
-                // Allocate buffer for data length + 4 byte header
-                ByteBuffer bb = ByteBuffer.allocate(data.length+4);
-                // Calculate number of packets and remaining packets
-                int numBlocks = (data.length / 512) + 1;
-                int remainingBlock = data.length % 512;
+            // Allocate buffer for data length + 4 byte header
+            ByteBuffer bb = ByteBuffer.allocate(data.length + 4);
 
-                // Put OPCODE
-                bb.putShort(OP_DAT);
+            // Put OPCODE
+            bb.putShort(OP_DAT);
 
-                // Put BLOCK nr
-                bb.putShort((short) 1);
+            // Put BLOCK nr
+            bb.putShort((short) blockNr);
 
-                // Read data to byte buffer
-                bb.put(data);
+            // Read data to byte buffer
+            bb.put(data);
 
-                byte[] embed = bb.array();
+            byte[] embed = bb.array();
 
-                DatagramPacket send = new DatagramPacket(embed, embed.length);
-                sendSocket.send(send);
-            }
-            else{
-                byte[] dataBuf = new byte[1]; // max data buffer
-                // dont know size of incoming packet
-                DatagramPacket receive = new DatagramPacket(dataBuf, dataBuf.length);
-                sendSocket.receive(receive);
-
-                byte[] b_ack = new byte[4];
-                var buff = ByteBuffer.wrap(b_ack);
-                buff.putShort((short)4);
-                buff.putShort((short)1);
-                DatagramPacket ack = new DatagramPacket(buff.array(), buff.array().length);
-                sendSocket.send(ack);
-
-                byte[] incoming = receive.getData();
-
-                System.out.println(incoming.length);
-
-            }
+            DatagramPacket send = new DatagramPacket(embed, embed.length);
+            sendSocket.send(send);
 
         } catch (FileNotFoundException e) {
             System.err.println("File not found.");
@@ -225,13 +238,38 @@ public class TFTPServer {
         return true;
     }
 
+    boolean receiveData(DatagramSocket sendSocket) {
+        try {
+            // Receive data
+            byte[] dataBuf = new byte[1]; // max data buffer
 
-    // Receive or send ack
+            byte[] b_ack = new byte[4];
+            var buff = ByteBuffer.wrap(b_ack);
+            buff.putShort((short) 4);
+            buff.putShort((short) 1);
+            DatagramPacket ack = new DatagramPacket(buff.array(), buff.array().length);
+            sendSocket.send(ack);
+
+            // dont know size of incoming packet
+            DatagramPacket receive = new DatagramPacket(dataBuf, dataBuf.length);
+            sendSocket.receive(receive);
+
+            byte[] incoming = receive.getData();
+
+            System.out.println(incoming.length);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     /**
      * Send or receive ack depending on opcode.
+     *
      * @param sendSocket Socket to use.
-     * @param opcode Opcode
+     * @param opcode     Opcode
      * @return Success/fail.
      * @throws IOException
      */
@@ -239,7 +277,7 @@ public class TFTPServer {
         byte[] ackBuf = new byte[4];
         ByteBuffer ack = ByteBuffer.wrap(ackBuf);
 
-        if(opcode == OP_RRQ){
+        if (opcode == OP_RRQ) {
             DatagramPacket receive = new DatagramPacket(ackBuf, 4);
             // Await response
             sendSocket.receive(receive);
@@ -249,12 +287,10 @@ public class TFTPServer {
             short op = ack.getShort(0);
             short numBlock = ack.getShort(2);
             return true;
-        }
-        else{
+        } else {
 
             ack.putShort(OP_ACK);
-            ack.putShort((short)block);
-
+            ack.putShort((short) block);
 
 
         }
