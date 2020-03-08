@@ -9,6 +9,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 
+enum Result {
+    DATA, ACK, ERR, STOP
+}
+
+
 public class TFTPServer {
     public static final int TFTPPORT = 69;
     public static final int BUFSIZE = 516;
@@ -138,7 +143,6 @@ public class TFTPServer {
      */
     private void HandleRQ(DatagramSocket sendSocket, String requestedFile, short opcode) throws IOException {
         if (opcode == OP_RRQ) {
-
             byte[] data = Files.readAllBytes(Paths.get(requestedFile));
 
             var blockList = blockify(data, 512);
@@ -149,9 +153,18 @@ public class TFTPServer {
             }
 
         } else if (opcode == OP_WRQ) {
-            // Ack + Receive
+
+            File file = new File(requestedFile);
+            OutputStream fos = new FileOutputStream(file);
+
+            // Ack write request with block 0
+            processAck(sendSocket, opcode, 0);
+
+            receiveData(sendSocket, fos);
             processAck(sendSocket, opcode, 1);
-            receiveData(sendSocket);
+
+            // WHile receive data = true
+            // ack data
 
         } else {
             System.err.println("Invalid request. Sending an error packet.");
@@ -163,33 +176,30 @@ public class TFTPServer {
 
     /**
      * Improvised state machine used as a timeout handler.
-     * @param sendResponse
-     * @param receive
-     * @param timeoutMillis
+     * @param sendResponse Response to be sent.
+     * @param receive Action to be awaited.
+     * @param timeoutMillis Timeout in milliseconds.
      */
-    public void await(Runnable sendResponse, Callable<Boolean> receive, int timeoutMillis) {
+    public void await(Callable<Result> sendResponse, Callable<Result> receive, int timeoutMillis) {
         try{
             // Start timer when sending
             long start = System.currentTimeMillis();
             final int MAX_TRIES = 3;
             int numTries = 0;
 
-            // Send packet
-            sendResponse.run();
+            // Send PACKET or ACK
+            sendResponse.call();
 
             // Wait for response
-            receive.call();
-            boolean ackReceived = receive.call();
-            if(ackReceived )  System.out.println("Ack received..");
+            Result res = receive.call();
+            if(res == Result.ACK)  System.out.println("Ack received..");
+            else if (res == Result.DATA) System.out.println("Data received..");
 
-            // If ack is not received - resend packet 3 times at each timeout
-
-            // medans ej ack OCH tid är mer än timeout OCH försök mindre än MAX
-            while (!ackReceived && System.currentTimeMillis() - start > timeoutMillis && numTries < MAX_TRIES) {
-                // Waiting for ACK
+            // If ack OR packet is not received - resend packet or ack 3 times at each timeout
+            while (res == Result.ERR && System.currentTimeMillis() - start > timeoutMillis && numTries < MAX_TRIES) {
                 start = System.currentTimeMillis();
-                sendResponse.run();
-                ackReceived = receive.call();
+                sendResponse.call();
+                res = receive.call();
                 numTries++;
                 System.out.println("Request timeout.." + numTries);
             }
@@ -200,6 +210,13 @@ public class TFTPServer {
         }
     }
 
+
+    /**
+     * Function which parses byte-data to blocks of specified size.
+     * @param data Byte data
+     * @param blockSize Block Size
+     * @return List of Byte arrays.
+     */
     public ArrayList<byte[]> blockify(byte[] data, int blockSize) {
         ArrayList<byte[]> blockList = new ArrayList<>();
         int numBlocks = (data.length / blockSize);
@@ -243,7 +260,7 @@ public class TFTPServer {
      * @param data       Data that is requested
      * @return result
      */
-    boolean sendData(DatagramSocket sendSocket, byte[] data, int blockNr) {
+    Result sendData(DatagramSocket sendSocket, byte[] data, int blockNr) {
         try {
             // Allocate buffer for data length + 4 byte header
             ByteBuffer bb = ByteBuffer.allocate(data.length + 4);
@@ -265,38 +282,36 @@ public class TFTPServer {
 
         } catch (FileNotFoundException e) {
             System.err.println("File not found.");
-            return false;
+            return Result.ERR;
         } catch (IOException e) {
             System.err.println("Unexpected IO Error");
-            return false;
+            return Result.ERR;
         }
-        return true;
+        return Result.DATA;
     }
 
-    boolean receiveData(DatagramSocket sendSocket) {
+
+    /**
+     * Function which receives data from socket.
+     * @param sendSocket
+     * @return
+     */
+    Result receiveData(DatagramSocket sendSocket, OutputStream fos) {
         try {
-            // Receive data
-            byte[] dataBuf = new byte[1]; // max data buffer
+            byte[] dataBuf = new byte[512]; // max data buffer
 
-            byte[] b_ack = new byte[4];
-            var buff = ByteBuffer.wrap(b_ack);
-            buff.putShort((short) 4);
-            buff.putShort((short) 1);
-            DatagramPacket ack = new DatagramPacket(buff.array(), buff.array().length);
-            sendSocket.send(ack);
-
-            // dont know size of incoming packet
             DatagramPacket receive = new DatagramPacket(dataBuf, dataBuf.length);
             sendSocket.receive(receive);
 
-            byte[] incoming = receive.getData();
+            byte[] data = Arrays.copyOfRange(dataBuf,4,receive.getLength());
 
-            System.out.println(incoming.length);
-            return true;
+            fos.write(data);
+            System.out.println("Received " + data.length + " bytes.");
         } catch (IOException e) {
             e.printStackTrace();
+            return Result.ERR;
         }
-        return false;
+        return Result.ERR;
     }
 
 
@@ -306,9 +321,8 @@ public class TFTPServer {
      * @param sendSocket Socket to use.
      * @param opcode     Opcode
      * @return Success/fail.
-     * @throws IOException
      */
-    boolean processAck(DatagramSocket sendSocket, short opcode, int block) {
+    Result processAck(DatagramSocket sendSocket, short opcode, int block) {
         try {
             byte[] ackBuf = new byte[4];
             ByteBuffer ack = ByteBuffer.wrap(ackBuf);
@@ -320,20 +334,19 @@ public class TFTPServer {
                 System.out.println("Awaiting ack for block " + block);
 
                 // TODO: Edge case if payload is exactly 512 bytes
-
-                short op = ack.getShort(0);
-                short numBlock = ack.getShort(2);
-                return true;
+                return Result.ACK;
             } else {
                 ack.putShort(OP_ACK);
                 ack.putShort((short) block);
+                System.out.println("Sending ack for block " + block);
+                sendSocket.send(new DatagramPacket(ackBuf, 4));
+                return Result.ACK;
             }
         }
         catch (IOException e){
             System.err.println("There was an error.");
-            return false;
+            return Result.ERR;
         }
-        return false;
     }
 }
 
