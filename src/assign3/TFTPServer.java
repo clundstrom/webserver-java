@@ -93,6 +93,8 @@ public class TFTPServer {
                         sendSocket.close();
                     } catch (SocketException e) {
                         System.err.println("Unexpected error in socket. Is port already bound?");
+                    } catch (FileNotFoundException e) {
+                        System.err.println("File not found.");
                     } catch (IOException e) {
                         System.err.println("There was an error reading or writing to file.");
                     }
@@ -154,16 +156,16 @@ public class TFTPServer {
             int readBytes = 0;
             int blockNum = 1;
             int lastBlock = 0;
-            while((readBytes = is.read(dataBuf)) != -1 ){
+            while ((readBytes = is.read(dataBuf)) != -1) {
                 int finalBlockNum = blockNum;
                 lastBlock = readBytes;
-                byte[] sendData = Arrays.copyOfRange(dataBuf,0, readBytes);
+                byte[] sendData = Arrays.copyOfRange(dataBuf, 0, readBytes);
                 await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 500);
                 blockNum++;
             }
 
-            // if data read is exactly the buffer size send an extra empty byte to acknowledge end of transfer
-            if(lastBlock % 512 == 0){
+            // if the last block is exactly 512 bytes send an extra empty packet to acknowledge end of transfer
+            if (lastBlock % 512 == 0) {
                 byte[] empty = new byte[0];
                 sendData(sendSocket, empty, blockNum);
             }
@@ -175,7 +177,7 @@ public class TFTPServer {
 
             processAck(sendSocket, opcode, blockNumber);
             // Send first ack, and receive data
-            while(receiving){
+            while (receiving) {
                 await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 500);
             }
             receiving = true;
@@ -190,12 +192,13 @@ public class TFTPServer {
 
     /**
      * Improvised state machine used as a timeout handler.
-     * @param sendResponse Response to be sent.
-     * @param receive Action to be awaited.
+     *
+     * @param sendResponse  Response to be sent.
+     * @param receive       Action to be awaited.
      * @param timeoutMillis Timeout in milliseconds.
      */
     public void await(Callable<Result> sendResponse, Callable<Result> receive, int timeoutMillis) {
-        try{
+        try {
             // Start timer when sending
             long start = System.currentTimeMillis();
             final int MAX_TRIES = 3;
@@ -206,7 +209,7 @@ public class TFTPServer {
 
             // Receive ack / SEND ACK
             Result res = receive.call();
-            if(res == Result.ACK_RECEIVED)  System.out.println("Ack received..");
+            if (res == Result.ACK_RECEIVED) System.out.println("Ack received..");
             else if (res == Result.DATA_RECEIVED) System.out.println("Data received..");
 
             // If ack OR packet is not received - resend packet or ack 3 times at each timeout
@@ -217,8 +220,7 @@ public class TFTPServer {
                 numTries++;
                 System.out.println("Request timeout.." + numTries);
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             System.err.println("There was an error retrieving results from callable.");
         }
@@ -267,14 +269,11 @@ public class TFTPServer {
             DatagramPacket send = new DatagramPacket(embed, embed.length);
             sendSocket.send(send);
 
-            if(data.length == 0){
+            if (data.length == 0) {
                 System.out.println("Sending " + data.length + " bytes (edge case). Block num " + blockNr);
-            }else {
+            } else {
                 System.out.println("Sending " + data.length + " bytes. Block num " + blockNr);
             }
-        } catch (FileNotFoundException e) {
-            System.err.println("File not found.");
-            return Result.ERR;
         } catch (IOException e) {
             System.err.println("Unexpected IO Error");
             return Result.ERR;
@@ -285,6 +284,7 @@ public class TFTPServer {
 
     /**
      * Function which receives data from socket.
+     *
      * @param sendSocket
      * @return
      */
@@ -295,13 +295,13 @@ public class TFTPServer {
             DatagramPacket receive = new DatagramPacket(dataBuf, dataBuf.length);
             sendSocket.receive(receive);
 
-            byte[] data = Arrays.copyOfRange(dataBuf,4,receive.getLength());
+            byte[] data = Arrays.copyOfRange(dataBuf, 4, receive.getLength());
 
             fos.write(data);
             System.out.println("Receiving " + data.length + " bytes.");
             blockNumber++;
             // If data is less than 512 stop receiving.
-            if(data.length < 512){
+            if (data.length < 512) {
                 receiving = false;
             }
         } catch (IOException e) {
@@ -336,8 +336,7 @@ public class TFTPServer {
                 sendSocket.send(new DatagramPacket(ackBuf, 4));
                 return Result.ACK_SENT;
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             System.err.println("There was an error.");
             return Result.ERR;
         }
