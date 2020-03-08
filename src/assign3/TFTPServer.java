@@ -10,21 +10,24 @@ import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 enum Result {
-    DATA, ACK, ERR, STOP
+    DATA_SENT, DATA_RECEIVED, ACK_SENT, ACK_RECEIVED, ERR, STOP
 }
 
 
 public class TFTPServer {
     public static final int TFTPPORT = 69;
     public static final int BUFSIZE = 516;
-    public static final String READDIR = "static/"; //custom address at your PC
-    public static final String WRITEDIR = "static/"; //custom address at your PC
+    public static final String READDIR = "download/"; //custom address at your PC
+    public static final String WRITEDIR = "upload/"; //custom address at your PC
     // OP codes
     public static final short OP_RRQ = 1;
     public static final short OP_WRQ = 2;
     public static final short OP_DAT = 3;
     public static final short OP_ACK = 4;
     public static final short OP_ERR = 5;
+
+    public static int blockNumber = 0;
+    private boolean receiving = true;
 
     public static void main(String[] args) {
         if (args.length > 0) {
@@ -157,15 +160,13 @@ public class TFTPServer {
             File file = new File(requestedFile);
             OutputStream fos = new FileOutputStream(file);
 
-            // Ack write request with block 0
-            processAck(sendSocket, opcode, 0);
-
-            receiveData(sendSocket, fos);
-            processAck(sendSocket, opcode, 1);
-
-            // WHile receive data = true
-            // ack data
-
+            processAck(sendSocket, opcode, blockNumber);
+            // Send first ack, and receive data
+            while(receiving){
+                await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 500);
+            }
+            receiving = true;
+            fos.close();
         } else {
             System.err.println("Invalid request. Sending an error packet.");
             //send_ERR(params);
@@ -187,13 +188,13 @@ public class TFTPServer {
             final int MAX_TRIES = 3;
             int numTries = 0;
 
-            // Send PACKET or ACK
+            // Send DATA / RECEIVE DATA
             sendResponse.call();
 
-            // Wait for response
+            // Receive ack / SEND ACK
             Result res = receive.call();
-            if(res == Result.ACK)  System.out.println("Ack received..");
-            else if (res == Result.DATA) System.out.println("Data received..");
+            if(res == Result.ACK_RECEIVED)  System.out.println("Ack received..");
+            else if (res == Result.DATA_RECEIVED) System.out.println("Data received..");
 
             // If ack OR packet is not received - resend packet or ack 3 times at each timeout
             while (res == Result.ERR && System.currentTimeMillis() - start > timeoutMillis && numTries < MAX_TRIES) {
@@ -287,7 +288,7 @@ public class TFTPServer {
             System.err.println("Unexpected IO Error");
             return Result.ERR;
         }
-        return Result.DATA;
+        return Result.DATA_SENT;
     }
 
 
@@ -298,7 +299,7 @@ public class TFTPServer {
      */
     Result receiveData(DatagramSocket sendSocket, OutputStream fos) {
         try {
-            byte[] dataBuf = new byte[512]; // max data buffer
+            byte[] dataBuf = new byte[516]; // max data buffer
 
             DatagramPacket receive = new DatagramPacket(dataBuf, dataBuf.length);
             sendSocket.receive(receive);
@@ -306,12 +307,16 @@ public class TFTPServer {
             byte[] data = Arrays.copyOfRange(dataBuf,4,receive.getLength());
 
             fos.write(data);
-            System.out.println("Received " + data.length + " bytes.");
+            System.out.println("Receiving " + data.length + " bytes.");
+            blockNumber++;
+            // If data is less than 512 stop receiving.
+            if(data.length < 512){
+                receiving = false;
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            return Result.ERR;
         }
-        return Result.ERR;
+        return Result.DATA_RECEIVED;
     }
 
 
@@ -334,13 +339,13 @@ public class TFTPServer {
                 System.out.println("Awaiting ack for block " + block);
 
                 // TODO: Edge case if payload is exactly 512 bytes
-                return Result.ACK;
+                return Result.ACK_RECEIVED;
             } else {
                 ack.putShort(OP_ACK);
                 ack.putShort((short) block);
                 System.out.println("Sending ack for block " + block);
                 sendSocket.send(new DatagramPacket(ackBuf, 4));
-                return Result.ACK;
+                return Result.ACK_SENT;
             }
         }
         catch (IOException e){
