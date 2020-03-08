@@ -146,13 +146,26 @@ public class TFTPServer {
      */
     private void HandleRQ(DatagramSocket sendSocket, String requestedFile, short opcode) throws IOException {
         if (opcode == OP_RRQ) {
-            byte[] data = Files.readAllBytes(Paths.get(requestedFile));
+            File file = new File(requestedFile);
+            InputStream is = new FileInputStream(file);
+            // Read 512 bytes from memory
+            byte[] dataBuf = new byte[512];
 
-            var blockList = blockify(data, 512);
-            for (int i = 0; i < blockList.size(); i++) {
-                int blockNum = i+1;
-                int listNumber = i;
-                await(() -> sendData(sendSocket, blockList.get(listNumber), blockNum), () -> processAck(sendSocket, opcode, blockNum), 500);
+            int readBytes = 0;
+            int blockNum = 1;
+            int lastBlock = 0;
+            while((readBytes = is.read(dataBuf)) != -1 ){
+                int finalBlockNum = blockNum;
+                lastBlock = readBytes;
+                byte[] sendData = Arrays.copyOfRange(dataBuf,0, readBytes);
+                await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 500);
+                blockNum++;
+            }
+
+            // if data read is exactly the buffer size send an extra empty byte to acknowledge end of transfer
+            if(lastBlock % 512 == 0){
+                byte[] empty = new byte[0];
+                sendData(sendSocket, empty, blockNum);
             }
 
         } else if (opcode == OP_WRQ) {
@@ -211,32 +224,6 @@ public class TFTPServer {
         }
     }
 
-
-    /**
-     * Function which parses byte-data to blocks of specified size.
-     * @param data Byte data
-     * @param blockSize Block Size
-     * @return List of Byte arrays.
-     */
-    public ArrayList<byte[]> blockify(byte[] data, int blockSize) {
-        ArrayList<byte[]> blockList = new ArrayList<>();
-        int numBlocks = (data.length / blockSize);
-        int lastBlockSize = data.length % blockSize;
-
-
-        if (data.length <= blockSize) {
-            blockList.add(data);
-            return blockList;
-        }
-
-        for (int i = 0; i < numBlocks; i++) {
-            blockList.add(Arrays.copyOfRange(data, i * blockSize, (i + 1) * blockSize));
-        }
-        blockList.add(Arrays.copyOfRange(data, numBlocks * 512, numBlocks * 512 + lastBlockSize));
-        return blockList;
-    }
-
-
     /**
      * Parses a byte array until terminator char is found.
      *
@@ -279,8 +266,12 @@ public class TFTPServer {
 
             DatagramPacket send = new DatagramPacket(embed, embed.length);
             sendSocket.send(send);
-            System.out.println("Sending " + data.length + " bytes. Block num " + blockNr);
 
+            if(data.length == 0){
+                System.out.println("Sending " + data.length + " bytes (edge case). Block num " + blockNr);
+            }else {
+                System.out.println("Sending " + data.length + " bytes. Block num " + blockNr);
+            }
         } catch (FileNotFoundException e) {
             System.err.println("File not found.");
             return Result.ERR;
@@ -331,14 +322,12 @@ public class TFTPServer {
         try {
             byte[] ackBuf = new byte[4];
             ByteBuffer ack = ByteBuffer.wrap(ackBuf);
-
             if (opcode == OP_RRQ) {
                 DatagramPacket receive = new DatagramPacket(ackBuf, 4);
                 // Await response
                 sendSocket.receive(receive);
                 System.out.println("Awaiting ack for block " + block);
 
-                // TODO: Edge case if payload is exactly 512 bytes
                 return Result.ACK_RECEIVED;
             } else {
                 ack.putShort(OP_ACK);
