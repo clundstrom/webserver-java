@@ -25,6 +25,7 @@ public class TFTPServer {
     public static final short OP_ERR = 5;
     private boolean receiving = true;
 
+
     public static void main(String[] args) {
         if (args.length > 0) {
             System.err.printf("usage: java %s\n", TFTPServer.class.getCanonicalName());
@@ -38,6 +39,7 @@ public class TFTPServer {
             System.err.println("Unexpected error on Socket.");
         }
     }
+
 
     private void start() throws SocketException {
         byte[] buf = new byte[BUFSIZE];
@@ -92,13 +94,18 @@ public class TFTPServer {
         }
     }
 
-    private boolean validateOpcode(DatagramSocket sendSocket, int reqType) throws SocketException {
+
+    /**
+     * Makes sure incoming request is a valid opcode.
+     */
+    private boolean validateOpcode(DatagramSocket sendSocket, int reqType) {
         if(reqType < 1 || reqType > 5){
             send_ERR(sendSocket, 4, "Illegal TFTP operation.");
             return false;
         }
         return true;
     }
+
 
     /**
      * Reads the first block of data, i.e., the request for an action (read or write).
@@ -122,6 +129,7 @@ public class TFTPServer {
         return new InetSocketAddress(incoming.getAddress(), incoming.getPort());
     }
 
+
     /**
      * Parses the request in buf to retrieve the type of request and requestedFile
      *
@@ -136,6 +144,7 @@ public class TFTPServer {
         return wrap.getShort();
     }
 
+
     /**
      * Handles RRQ and WRQ requests
      *
@@ -144,6 +153,7 @@ public class TFTPServer {
      * @param opcode        (RRQ or WRQ)
      */
     private void HandleRQ(DatagramSocket sendSocket, String requestedFile, short opcode) {
+        sendSocket.getPort();
         try {
             if (opcode == OP_RRQ) {
                 // Open file and input stream
@@ -188,7 +198,6 @@ public class TFTPServer {
                 }
 
             } else if (opcode == OP_WRQ) {
-                // Open file and output stream
                 File file = new File(requestedFile);
 
                 // Check if file exists
@@ -196,14 +205,14 @@ public class TFTPServer {
                     send_ERR(sendSocket, 6, "File already exists.");
                     return;
                 }
-
+                // Open output stream
                 OutputStream fos = new FileOutputStream(file);
 
-                int blockNum = 1;
                 // Send initial ack to start data transfer
+                int blockNum = 1;
                 processAck(sendSocket, opcode, 0);
 
-
+                // Receive and ACK data until last packet is sent
                 while (receiving) {
                     int finalBlock = blockNum;
                     // Start timeout state-handler for sending data and receiving acks
@@ -217,9 +226,8 @@ public class TFTPServer {
                 receiving = true;
                 fos.close();
             } else {
-                System.err.println("Invalid request. Sending an error packet.");
+                System.err.println("Illegal request. Sending an error packet.");
                 send_ERR(sendSocket, 4, "Illegal TFTP operation");
-
                 // Close connection (client is dead)
                 sendSocket.close();
             }
@@ -245,6 +253,7 @@ public class TFTPServer {
             byte[] ackBuf = new byte[5 + extraBytes];
             ByteBuffer ack = ByteBuffer.wrap(ackBuf);
 
+            // Form error message.
             ack.putShort(OP_ERR);
             ack.putShort((short) errorCode);
             ack.put(errorMsg.getBytes());
@@ -254,8 +263,6 @@ public class TFTPServer {
         } catch (IOException e) {
             System.err.println("Could not send error message.");
         }
-//        4         Illegal TFTP operation.
-//        5         Unknown transfer ID.
     }
 
 
@@ -285,6 +292,7 @@ public class TFTPServer {
             // Receive ack / SEND ACK
             Result res = ackAction.call();
 
+            // Loop that resend packets if previous calls return errors
             while (res == Result.ERR || System.currentTimeMillis() - start > timeoutMillis) {
                 numTries++;
                 System.out.println("Request timeout.." + numTries);
@@ -369,6 +377,7 @@ public class TFTPServer {
 
             DatagramPacket send = new DatagramPacket(embed, embed.length);
             sendSocket.send(send);
+            System.out.println("Sending at " + sendSocket.getPort());
 
             if (data.length == 0) {
                 System.out.println("Sending " + data.length + " bytes (edge case). Block num " + blockNr);
@@ -397,7 +406,7 @@ public class TFTPServer {
             DatagramPacket receive = new DatagramPacket(dataBuf, dataBuf.length);
             sendSocket.receive(receive);
 
-            // Copy date
+            // Copy data
             byte[] data = Arrays.copyOfRange(dataBuf, 4, receive.getLength());
 
             // Check if there is enough space on disk
@@ -440,6 +449,7 @@ public class TFTPServer {
                 System.out.println("Awaiting ack for block " + block);
                 sendSocket.receive(receive);
 
+                if(!verifySender(sendSocket, receive)) throw new PortUnreachableException("");
 
                 // Only return result if block numbers match
                 if (ack.getShort(2) == block) {
@@ -453,11 +463,31 @@ public class TFTPServer {
                 return Result.ACK_SENT;
             }
         }
+        catch (PortUnreachableException e){
+            System.err.println("Packet ID mismatch. Terminating.");
+            // Close connection and exit.
+            sendSocket.close();
+        }
         catch (IOException e) {
             return Result.ERR;
         }
 
         return Result.ERR;
+    }
+
+
+    /**
+     * Function that verifies that the packets come from the right sender.
+     * @param sendSocket Socket to send through.
+     * @param receive incoming packet.
+     * @return boolean True/false
+     */
+    private boolean verifySender(DatagramSocket sendSocket, DatagramPacket receive) {
+        if(receive.getPort() != sendSocket.getPort()){
+            send_ERR(sendSocket, 5, "Unknown Transfer ID.");
+            return false;
+        }
+        return true;
     }
 }
 
