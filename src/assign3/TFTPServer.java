@@ -16,7 +16,7 @@ public class TFTPServer {
     public static final int TFTPPORT = 69;
     public static final int BUFSIZE = 516;
     public static final String READDIR = "download/"; //custom address at your PC
-    public static final String WRITEDIR = "upload/"; //custom address at your PC
+    public static final String WRITEDIR = "download/"; //custom address at your PC
     // OP codes
     public static final short OP_RRQ = 1;
     public static final short OP_WRQ = 2;
@@ -69,6 +69,10 @@ public class TFTPServer {
                     // Connect to client
                     sendSocket.connect(clientAddress);
 
+                    if(!validateOpcode(sendSocket, reqType)){
+                        return;
+                    }
+
                     System.out.printf("%s request for %s from %s using port %d \n",
                             (reqType == OP_RRQ) ? "Read" : "Write", requestedFile.toString(), clientAddress.getHostName(), clientAddress.getPort());
 
@@ -88,6 +92,14 @@ public class TFTPServer {
                 }
             }).start();
         }
+    }
+
+    private boolean validateOpcode(DatagramSocket sendSocket, int reqType) throws SocketException {
+        if(reqType < 1 || reqType > 5){
+            send_ERR(sendSocket, 4, "Illegal TFTP operation.");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -122,6 +134,7 @@ public class TFTPServer {
     private int ParseRQ(byte[] buf, StringBuffer requestedFile) {
         requestedFile.append(parseToNullTermination(buf));
         ByteBuffer wrap = ByteBuffer.wrap(buf);
+
         return wrap.getShort();
     }
 
@@ -188,30 +201,33 @@ public class TFTPServer {
 
                 OutputStream fos = new FileOutputStream(file);
 
+                int blockNum = 1;
                 // Send initial ack to start data transfer
-                processAck(sendSocket, opcode, blockNumber);
+                processAck(sendSocket, opcode, 0);
+
 
                 while (receiving) {
+                    int finalBlock = blockNum;
                     // Start timeout state-handler for sending data and receiving acks
-                    if (!await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 1000, sendSocket)) {
+                    if (!await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, finalBlock), 1000, sendSocket)) {
                         System.err.println("Connection timed out..");
-                        blockNumber = 0;
                         return;
                     }
+                    blockNum++;
                 }
                 // Reset receiving and close output stream
                 receiving = true;
                 fos.close();
             } else {
                 System.err.println("Invalid request. Sending an error packet.");
-                send_ERR(sendSocket, (short) 0, "An unknown error occurred.");
+                send_ERR(sendSocket, 4, "Illegal TFTP operation");
 
                 // Close connection (client is dead)
                 sendSocket.close();
             }
         } catch (IOException e) {
             System.err.println("Access violation.. Sending error message.");
-            send_ERR(sendSocket, (short) 2, "Access violation.");
+            send_ERR(sendSocket, 2, "Access violation.");
         }
     }
 
