@@ -5,6 +5,7 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 enum Result {
     DATA_SENT, DATA_RECEIVED, ACK_SENT, ACK_RECEIVED, ERR, STOP
@@ -164,7 +165,10 @@ public class TFTPServer {
                 byte[] sendData = Arrays.copyOfRange(dataBuf, 0, readBytes);
 
                 // Start timeout state-handler for sending data and receiving acks
-                await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 500);
+                if(!await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 1000)){
+                    System.err.println("Connection timed out..");
+                    return;
+                }
                 blockNum++;
             }
 
@@ -184,7 +188,11 @@ public class TFTPServer {
 
             while (receiving) {
                 // Start timeout state-handler for sending data and receiving acks
-                await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 500);
+                if(!await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 1000)){
+                    System.err.println("Connection timed out..");
+                    blockNumber = 0;
+                    return;
+                }
             }
             // Reset receiving and close output stream
             receiving = true;
@@ -209,7 +217,7 @@ public class TFTPServer {
      * @param ackAction       Action to be awaited.
      * @param timeoutMillis Timeout in milliseconds.
      */
-    public void await(Callable<Result> dataAction, Callable<Result> ackAction, int timeoutMillis) {
+    public boolean await(Callable<Result> dataAction, Callable<Result> ackAction, int timeoutMillis) {
         try {
             // Start timer when sending
             long start = System.currentTimeMillis();
@@ -222,8 +230,12 @@ public class TFTPServer {
             // Receive ack / SEND ACK
             Result res = ackAction.call();
 
-            // Loop to handle
-            while (res == Result.ERR && System.currentTimeMillis() - start > timeoutMillis && numTries < MAX_TRIES) {
+            while (System.currentTimeMillis() - start > timeoutMillis) {
+                numTries++;
+                System.out.println("Request timeout.." + numTries);
+
+                if(numTries == MAX_TRIES) throw new TimeoutException();
+
                 // Reset timer
                 start = System.currentTimeMillis();
 
@@ -232,17 +244,13 @@ public class TFTPServer {
 
                 // Receive/send ACK
                 res = ackAction.call();
-                numTries++;
-                System.out.println("Request timeout.." + numTries);
             }
+
 
             // Print results
             switch (res){
                 case ACK_RECEIVED:
                     System.out.println("Ack received..");
-                    break;
-                case ACK_SENT:
-                    System.out.println("Ack sent..");
                     break;
                 case DATA_RECEIVED:
                     System.out.println("Data received..");
@@ -253,9 +261,15 @@ public class TFTPServer {
                 default:
                     break;
             }
-        } catch (Exception e) {
-            System.err.println("There was an error retrieving results from callable.");
+
+        } catch (TimeoutException e){
+            return false;
         }
+        catch (Exception e) {
+            System.err.println("There was an error retrieving results from callable.");
+            return false;
+        }
+        return true;
     }
 
     /**
