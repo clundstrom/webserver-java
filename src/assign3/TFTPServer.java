@@ -205,6 +205,8 @@ public class TFTPServer {
             } else {
                 System.err.println("Invalid request. Sending an error packet.");
                 send_ERR(sendSocket, (short) 0, "An unknown error occurred.");
+
+                // Close connection (client is dead)
                 sendSocket.close();
             }
         } catch (IOException e) {
