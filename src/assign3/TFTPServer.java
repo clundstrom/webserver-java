@@ -287,7 +287,6 @@ public class TFTPServer {
             // Receive ack / SEND ACK
             Result res = ackAction.call();
 
-
             while (res == Result.ERR || System.currentTimeMillis() - start > timeoutMillis) {
                 numTries++;
                 System.out.println("Request timeout.." + numTries);
@@ -439,9 +438,11 @@ public class TFTPServer {
             ByteBuffer ack = ByteBuffer.wrap(ackBuf);
 
             if (opcode == OP_RRQ) {
+                sendSocket.setSoTimeout(1000);
                 DatagramPacket receive = new DatagramPacket(ackBuf, 4);
-                sendSocket.receive(receive);
                 System.out.println("Awaiting ack for block " + block);
+                sendSocket.receive(receive);
+
 
                 // Only return result if block numbers match
                 if (ack.getShort(2) == block) {
@@ -454,11 +455,11 @@ public class TFTPServer {
                 sendSocket.send(new DatagramPacket(ackBuf, 4));
                 return Result.ACK_SENT;
             }
-        } catch (IOException e) {
-            System.err.println("Error processing ack. Sending error message.");
-            send_ERR(sendSocket, 0, "Unknown error while parsing ack.");
+        }
+        catch (IOException e) {
             return Result.ERR;
         }
+
         return Result.ERR;
     }
 }
