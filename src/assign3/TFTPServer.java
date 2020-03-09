@@ -401,7 +401,7 @@ public class TFTPServer {
      */
     Result receiveData(DatagramSocket sendSocket, OutputStream fos) {
         try {
-            byte[] dataBuf = new byte[516]; // max data buffer
+            byte[] dataBuf = new byte[BUFSIZE]; // max data buffer
 
             // Create packet with buffer of 516 bytes ( 4 for header, 512 data)
             DatagramPacket receive = new DatagramPacket(dataBuf, dataBuf.length);
