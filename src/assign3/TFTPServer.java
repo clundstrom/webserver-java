@@ -84,9 +84,7 @@ public class TFTPServer {
                     }
                     sendSocket.close();
                 } catch (SocketException e) {
-                    System.err.println("Unexpected error in socket. Is port already bound?");
-                } catch (IOException e) {
-                    System.err.println("There was an error reading or writing to file.");
+                    send_ERR(socket, 0, "Unknown error occurred.");
                 }
             }).start();
         }
@@ -134,86 +132,93 @@ public class TFTPServer {
      * @param requestedFile (name of file to read/write)
      * @param opcode        (RRQ or WRQ)
      */
-    private void HandleRQ(DatagramSocket sendSocket, String requestedFile, short opcode) throws IOException {
-        if (opcode == OP_RRQ) {
-            // Open file and input stream
-            File file = new File(requestedFile);
+    private void HandleRQ(DatagramSocket sendSocket, String requestedFile, short opcode) {
+        try {
+            if (opcode == OP_RRQ) {
+                // Open file and input stream
+                File file = new File(requestedFile);
 
-            if (!file.exists()) {
-                send_ERR(sendSocket, 1, "File not found.");
-                System.err.println("File not found. Sending error message.");
-                return;
-            }
-
-            InputStream is = new FileInputStream(file);
-
-            // Allocate 512 byte buffer
-            byte[] dataBuf = new byte[512];
-
-            int readBytes;
-            int blockNum = 1;
-            int lastBlock = 0;
-
-            // Process bytes from stream
-            while ((readBytes = is.read(dataBuf)) != -1) {
-                int finalBlockNum = blockNum;
-                lastBlock = readBytes;
-
-                // Copy the amount of bytes read up to a maximum of 512
-                byte[] sendData = Arrays.copyOfRange(dataBuf, 0, readBytes);
-
-                // Start timeout state-handler for sending data and receiving acks
-                if (!await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 1000)) {
-                    System.err.println("Connection timed out..");
+                // Check if file exists
+                if (!file.exists()) {
+                    send_ERR(sendSocket, 1, "File not found.");
+                    System.err.println("File not found. Sending error message.");
                     return;
                 }
-                blockNum++;
-            }
 
-            // Send an extra empty packet to acknowledge end of transfer in EDGE CASE where packet size matches buffer size
-            if (lastBlock % 512 == 0) {
-                byte[] empty = new byte[0];
-                sendData(sendSocket, empty, blockNum);
-            }
+                InputStream is = new FileInputStream(file);
 
-        } else if (opcode == OP_WRQ) {
-            // Open file and output stream
-            File file = new File(requestedFile);
+                // Allocate 512 byte buffer
+                byte[] dataBuf = new byte[512];
 
-            // Check if file exists
-            if (file.exists()) {
-                send_ERR(sendSocket, 6, "File already exists.");
-                return;
-            }
+                int readBytes;
+                int blockNum = 1;
+                int lastBlock = 0;
 
-            OutputStream fos = new FileOutputStream(file);
+                // Process bytes from stream
+                while ((readBytes = is.read(dataBuf)) != -1) {
+                    int finalBlockNum = blockNum;
+                    lastBlock = readBytes;
 
-            // Send initial ack to start data transfer
-            processAck(sendSocket, opcode, blockNumber);
+                    // Copy the amount of bytes read up to a maximum of 512
+                    byte[] sendData = Arrays.copyOfRange(dataBuf, 0, readBytes);
 
-            while (receiving) {
-                // Start timeout state-handler for sending data and receiving acks
-                if (!await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 1000)) {
-                    System.err.println("Connection timed out..");
-                    blockNumber = 0;
+                    // Start timeout state-handler for sending data and receiving acks
+                    if (!await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 1000, sendSocket)) {
+                        System.err.println("Connection timed out..");
+                        return;
+                    }
+                    blockNum++;
+                }
+
+                // Send an extra empty packet to acknowledge end of transfer in EDGE CASE where packet size matches buffer size
+                if (lastBlock % 512 == 0) {
+                    byte[] empty = new byte[0];
+                    sendData(sendSocket, empty, blockNum);
+                }
+
+            } else if (opcode == OP_WRQ) {
+                // Open file and output stream
+                File file = new File(requestedFile);
+
+                // Check if file exists
+                if (file.exists()) {
+                    send_ERR(sendSocket, 6, "File already exists.");
                     return;
                 }
+
+                OutputStream fos = new FileOutputStream(file);
+
+                // Send initial ack to start data transfer
+                processAck(sendSocket, opcode, blockNumber);
+
+                while (receiving) {
+                    // Start timeout state-handler for sending data and receiving acks
+                    if (!await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 1000, sendSocket)) {
+                        System.err.println("Connection timed out..");
+                        blockNumber = 0;
+                        return;
+                    }
+                }
+                // Reset receiving and close output stream
+                receiving = true;
+                fos.close();
+            } else {
+                System.err.println("Invalid request. Sending an error packet.");
+                send_ERR(sendSocket, (short) 0, "An unknown error occurred.");
+                sendSocket.close();
             }
-            // Reset receiving and close output stream
-            receiving = true;
-            fos.close();
-        } else {
-            System.err.println("Invalid request. Sending an error packet.");
-            send_ERR(sendSocket, (short) 0, "An unknown error occurred.");
-            sendSocket.close();
+        } catch (IOException e) {
+            System.err.println("Access violation.. Sending error message.");
+            send_ERR(sendSocket, (short) 2, "Access violation.");
         }
     }
 
 
     /**
      * Function which sends error to socket.
-     *<p>
-     * @param socket Socket to send through.
+     * <p>
+     *
+     * @param socket    Socket to send through.
      * @param errorCode Error code
      * @param errorMsg  Message
      */
@@ -233,7 +238,6 @@ public class TFTPServer {
         } catch (IOException e) {
             System.err.println("Could not send error message.");
         }
-//        0         Not defined, see error message (if any) x xxxx
 //        4         Illegal TFTP operation.
 //        5         Unknown transfer ID.
     }
@@ -252,7 +256,7 @@ public class TFTPServer {
      * @param ackAction     Action to be awaited.
      * @param timeoutMillis Timeout in milliseconds.
      */
-    public boolean await(Callable<Result> dataAction, Callable<Result> ackAction, int timeoutMillis) {
+    public boolean await(Callable<Result> dataAction, Callable<Result> ackAction, int timeoutMillis, DatagramSocket socket) {
         try {
             // Start timer when sending
             long start = System.currentTimeMillis();
@@ -265,10 +269,12 @@ public class TFTPServer {
             // Receive ack / SEND ACK
             Result res = ackAction.call();
 
+
             while (res == Result.ERR || System.currentTimeMillis() - start > timeoutMillis) {
                 numTries++;
                 System.out.println("Request timeout.." + numTries);
 
+                // Check timeout
                 if (numTries == MAX_TRIES) throw new TimeoutException();
 
                 // Reset timer
@@ -297,6 +303,7 @@ public class TFTPServer {
             }
 
         } catch (TimeoutException e) {
+            send_ERR(socket, 0, "Connection timed out..");
             return false;
         } catch (Exception e) {
             System.err.println("There was an error retrieving results from callable.");
@@ -305,10 +312,11 @@ public class TFTPServer {
         return true;
     }
 
+
     /**
      * Parses a byte array until terminator char is found.
      *
-     * @param buf    Byte array to parse.
+     * @param buf Byte array to parse.
      * @return A parsed String.
      */
     String parseToNullTermination(byte[] buf) {
@@ -417,7 +425,7 @@ public class TFTPServer {
                 sendSocket.receive(receive);
                 System.out.println("Awaiting ack for block " + block);
 
-                // Only return ack received if block numbers match
+                // Only return result if block numbers match
                 if (ack.getShort(2) == block) {
                     return Result.ACK_RECEIVED;
                 }
