@@ -101,6 +101,7 @@ public class TFTPServer {
     private boolean validateOpcode(DatagramSocket sendSocket, int reqType) {
         if(reqType < 1 || reqType > 5){
             send_ERR(sendSocket, 4, "Illegal TFTP operation.");
+            sendSocket.close();
             return false;
         }
         return true;
