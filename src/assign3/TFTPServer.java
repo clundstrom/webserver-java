@@ -8,7 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
 enum Result {
-    DATA_SENT, DATA_RECEIVED, ACK_SENT, ACK_RECEIVED, ERR, STOP
+    DATA_SENT, DATA_RECEIVED, ACK_SENT, ACK_RECEIVED, ERR
 }
 
 
@@ -59,44 +59,36 @@ public class TFTPServer {
             // Get address and read packet into buffer
             final InetSocketAddress clientAddress = receiveFrom(socket, buf);
 
-            // If clientAddress is null, an error occurred in receiveFrom()
-            if (clientAddress == null)
-                continue;
-
             final StringBuffer requestedFile = new StringBuffer();
             final int reqType = ParseRQ(buf, requestedFile);
 
-            new Thread() {
-                public void run() {
-                    try {
-                        DatagramSocket sendSocket = new DatagramSocket(0);
+            new Thread(() -> {
+                try {
+                    DatagramSocket sendSocket = new DatagramSocket(0);
 
-                        // Connect to client
-                        sendSocket.connect(clientAddress);
+                    // Connect to client
+                    sendSocket.connect(clientAddress);
 
-                        System.out.printf("%s request for %s from %s using port %d \n",
-                                (reqType == OP_RRQ) ? "Read" : "Write", requestedFile.toString(), clientAddress.getHostName(), clientAddress.getPort());
+                    System.out.printf("%s request for %s from %s using port %d \n",
+                            (reqType == OP_RRQ) ? "Read" : "Write", requestedFile.toString(), clientAddress.getHostName(), clientAddress.getPort());
 
-                        // Read request
-                        if (reqType == OP_RRQ) {
-                            requestedFile.insert(0, READDIR);
-                            HandleRQ(sendSocket, requestedFile.toString(), OP_RRQ);
-                        }
-                        // Write request
-                        else {
-                            requestedFile.insert(0, WRITEDIR);
-                            HandleRQ(sendSocket, requestedFile.toString(), OP_WRQ);
-                        }
-                        sendSocket.close();
-                    } catch (SocketException e) {
-                        System.err.println("Unexpected error in socket. Is port already bound?");
-                    } catch (FileNotFoundException e) {
-                        System.err.println("File not found.");
-                    } catch (IOException e) {
-                        System.err.println("There was an error reading or writing to file.");
+                    // Read request
+                    if (reqType == OP_RRQ) {
+                        requestedFile.insert(0, READDIR);
+                        HandleRQ(sendSocket, requestedFile.toString(), OP_RRQ);
                     }
+                    // Write request
+                    else {
+                        requestedFile.insert(0, WRITEDIR);
+                        HandleRQ(sendSocket, requestedFile.toString(), OP_WRQ);
+                    }
+                    sendSocket.close();
+                } catch (SocketException e) {
+                    System.err.println("Unexpected error in socket. Is port already bound?");
+                } catch (IOException e) {
+                    System.err.println("There was an error reading or writing to file.");
                 }
-            }.start();
+            }).start();
         }
     }
 
@@ -115,7 +107,7 @@ public class TFTPServer {
         try {
             socket.receive(incoming);
         } catch (IOException e) {
-            System.err.println("There was an error receiving packets.");
+            send_ERR(socket, 0, "Unknown error while parsing incoming packet.");
         }
 
         // Return address of client
@@ -130,10 +122,9 @@ public class TFTPServer {
      * @return opcode (request type: RRQ or WRQ)
      */
     private int ParseRQ(byte[] buf, StringBuffer requestedFile) {
-        requestedFile.append(parseToNullTermination(buf, 2, '\0'));
+        requestedFile.append(parseToNullTermination(buf));
         ByteBuffer wrap = ByteBuffer.wrap(buf);
-        short opcode = wrap.getShort();
-        return opcode;
+        return wrap.getShort();
     }
 
     /**
@@ -147,12 +138,19 @@ public class TFTPServer {
         if (opcode == OP_RRQ) {
             // Open file and input stream
             File file = new File(requestedFile);
+
+            if (!file.exists()) {
+                send_ERR(sendSocket, 1, "File not found.");
+                System.err.println("File not found. Sending error message.");
+                return;
+            }
+
             InputStream is = new FileInputStream(file);
 
             // Allocate 512 byte buffer
             byte[] dataBuf = new byte[512];
 
-            int readBytes = 0;
+            int readBytes;
             int blockNum = 1;
             int lastBlock = 0;
 
@@ -165,7 +163,7 @@ public class TFTPServer {
                 byte[] sendData = Arrays.copyOfRange(dataBuf, 0, readBytes);
 
                 // Start timeout state-handler for sending data and receiving acks
-                if(!await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 1000)){
+                if (!await(() -> sendData(sendSocket, sendData, finalBlockNum), () -> processAck(sendSocket, opcode, finalBlockNum), 1000)) {
                     System.err.println("Connection timed out..");
                     return;
                 }
@@ -181,6 +179,13 @@ public class TFTPServer {
         } else if (opcode == OP_WRQ) {
             // Open file and output stream
             File file = new File(requestedFile);
+
+            // Check if file exists
+            if (file.exists()) {
+                send_ERR(sendSocket, 6, "File already exists.");
+                return;
+            }
+
             OutputStream fos = new FileOutputStream(file);
 
             // Send initial ack to start data transfer
@@ -188,7 +193,7 @@ public class TFTPServer {
 
             while (receiving) {
                 // Start timeout state-handler for sending data and receiving acks
-                if(!await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 1000)){
+                if (!await(() -> receiveData(sendSocket, fos), () -> processAck(sendSocket, opcode, blockNumber), 1000)) {
                     System.err.println("Connection timed out..");
                     blockNumber = 0;
                     return;
@@ -199,9 +204,38 @@ public class TFTPServer {
             fos.close();
         } else {
             System.err.println("Invalid request. Sending an error packet.");
-            //send_ERR(params);
-            return;
+            send_ERR(sendSocket, (short) 0, "An unknown error occurred.");
+            sendSocket.close();
         }
+    }
+
+
+    /**
+     * Function which sends error to socket.
+     *<p>
+     * @param socket Socket to send through.
+     * @param errorCode Error code
+     * @param errorMsg  Message
+     */
+    void send_ERR(DatagramSocket socket, int errorCode, String errorMsg) {
+        try {
+            int extraBytes = errorMsg.length();
+            // Allocate bytes for header
+            byte[] ackBuf = new byte[5 + extraBytes];
+            ByteBuffer ack = ByteBuffer.wrap(ackBuf);
+
+            ack.putShort(OP_ERR);
+            ack.putShort((short) errorCode);
+            ack.put(errorMsg.getBytes());
+            ack.put((byte) 0);
+
+            socket.send(new DatagramPacket(ackBuf, ackBuf.length));
+        } catch (IOException e) {
+            System.err.println("Could not send error message.");
+        }
+//        0         Not defined, see error message (if any) x xxxx
+//        4         Illegal TFTP operation.
+//        5         Unknown transfer ID.
     }
 
 
@@ -213,8 +247,9 @@ public class TFTPServer {
      * SEND DATA - RECEIVE ACK
      * RECEIVE DATA - SEND ACK
      * <p>
-     * @param dataAction  Response to be sent.
-     * @param ackAction       Action to be awaited.
+     *
+     * @param dataAction    Response to be sent.
+     * @param ackAction     Action to be awaited.
      * @param timeoutMillis Timeout in milliseconds.
      */
     public boolean await(Callable<Result> dataAction, Callable<Result> ackAction, int timeoutMillis) {
@@ -234,7 +269,7 @@ public class TFTPServer {
                 numTries++;
                 System.out.println("Request timeout.." + numTries);
 
-                if(numTries == MAX_TRIES) throw new TimeoutException();
+                if (numTries == MAX_TRIES) throw new TimeoutException();
 
                 // Reset timer
                 start = System.currentTimeMillis();
@@ -246,9 +281,8 @@ public class TFTPServer {
                 res = ackAction.call();
             }
 
-
             // Print results
-            switch (res){
+            switch (res) {
                 case ACK_RECEIVED:
                     System.out.println("Ack received..");
                     break;
@@ -262,10 +296,9 @@ public class TFTPServer {
                     break;
             }
 
-        } catch (TimeoutException e){
+        } catch (TimeoutException e) {
             return false;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("There was an error retrieving results from callable.");
             return false;
         }
@@ -276,13 +309,12 @@ public class TFTPServer {
      * Parses a byte array until terminator char is found.
      *
      * @param buf    Byte array to parse.
-     * @param offset Start with an offset.
      * @return A parsed String.
      */
-    String parseToNullTermination(byte[] buf, int offset, char terminator) {
+    String parseToNullTermination(byte[] buf) {
         StringBuilder sb = new StringBuilder();
-        for (int i = offset; i < buf.length; i++) {
-            if ((char) buf[i] == terminator) break;
+        for (int i = 2; i < buf.length; i++) {
+            if ((char) buf[i] == '\0') break;
             sb.append((char) buf[i]);
         }
         return sb.toString();
@@ -321,7 +353,7 @@ public class TFTPServer {
                 System.out.println("Sending " + data.length + " bytes. Block num " + blockNr);
             }
         } catch (IOException e) {
-            System.err.println("Unexpected IO Error");
+            send_ERR(sendSocket, 2, "Access violation.");
             return Result.ERR;
         }
         return Result.DATA_SENT;
@@ -329,10 +361,10 @@ public class TFTPServer {
 
 
     /**
-     * Function which receives data from socket.
+     * Function which receives data from socket and writes to file.
      *
-     * @param sendSocket
-     * @return
+     * @param sendSocket Receiving from socket.
+     * @return Result.
      */
     Result receiveData(DatagramSocket sendSocket, OutputStream fos) {
         try {
@@ -345,6 +377,12 @@ public class TFTPServer {
             // Copy date
             byte[] data = Arrays.copyOfRange(dataBuf, 4, receive.getLength());
 
+            // Check if there is enough space on disk
+            if (new File(WRITEDIR).getUsableSpace() < data.length) {
+                send_ERR(sendSocket, 3, "Disk is full.. Abort transfer.");
+                return Result.ERR;
+            }
+
             // Write data to stream
             fos.write(data);
             System.out.println("Receiving " + data.length + " bytes.");
@@ -355,7 +393,7 @@ public class TFTPServer {
                 receiving = false;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            send_ERR(sendSocket, 2, "Access violation.");
         }
         return Result.DATA_RECEIVED;
     }
@@ -380,7 +418,7 @@ public class TFTPServer {
                 System.out.println("Awaiting ack for block " + block);
 
                 // Only return ack received if block numbers match
-                if(ack.getShort(2) == block){
+                if (ack.getShort(2) == block) {
                     return Result.ACK_RECEIVED;
                 }
             } else {
@@ -391,7 +429,8 @@ public class TFTPServer {
                 return Result.ACK_SENT;
             }
         } catch (IOException e) {
-            System.err.println("There was an error.");
+            System.err.println("Error processing ack. Sending error message.");
+            send_ERR(sendSocket, 0, "Unknown error while parsing ack.");
             return Result.ERR;
         }
         return Result.ERR;
