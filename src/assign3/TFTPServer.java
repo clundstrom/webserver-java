@@ -23,8 +23,6 @@ public class TFTPServer {
     public static final short OP_DAT = 3;
     public static final short OP_ACK = 4;
     public static final short OP_ERR = 5;
-
-    private static int blockNumber = 0;
     private boolean receiving = true;
 
     public static void main(String[] args) {
@@ -411,7 +409,6 @@ public class TFTPServer {
             // Write data to stream
             fos.write(data);
             System.out.println("Receiving " + data.length + " bytes.");
-            blockNumber++;
 
             // If data is less than 512 stop receiving-loop.
             if (data.length < 512) {
