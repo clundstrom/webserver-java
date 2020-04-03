@@ -1,5 +1,3 @@
-package assign2;
-
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;

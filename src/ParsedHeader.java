@@ -1,5 +1,3 @@
-package assign2;
-
 import java.util.Map;
 
 public class ParsedHeader {

@@ -1,5 +1,3 @@
-package assign2;
-
 import java.time.LocalDateTime;
 
 public class HttpResponse {

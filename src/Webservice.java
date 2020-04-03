@@ -1,22 +1,34 @@
-package assign1;
-
 import java.io.IOException;
-import java.net.*;
+import java.net.BindException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class TCPEchoServer {
+public class Webservice {
 
-    public static int MYPORT = 25650;
-    public static int BUFSIZE = 1024;
+    public static int MYPORT = 8080;
+    public static String PATH = "static";
 
     public static void main(String[] args) {
         try {
-            // Parse buffer-size
+            ArgParser.verifyArguments(args);
+
+            // Parse Port
             if (args.length >= 1) {
-                BUFSIZE = ArgParser.tryParse(args[0]);
-                if(BUFSIZE < 1) {
-                    System.err.println("Buffer size not allowed. Exiting..");
+                MYPORT = ArgParser.tryParse(args[0]);
+                if(MYPORT > 65535 || MYPORT < 1) {
+                    System.err.println("Port out of range. Exiting..");
+                    System.exit(1);
+                }
+            }
+
+            // Parse Path
+            if (args.length >= 2) {
+                PATH = args[1];
+                if(!Paths.get(PATH).toFile().isDirectory()) {
+                    System.err.println("Given path is not a valid directory. Exiting..");
                     System.exit(1);
                 }
             }
@@ -36,10 +48,10 @@ public class TCPEchoServer {
                 System.out.println("Creating thread for incoming request: " + incoming.getInetAddress() + " " + incoming.getPort());
 
                 // Create separate thread for the task
-                TCPEchoTask task = new TCPEchoTask(incoming, BUFSIZE);
+                ServeTask task = new ServeTask(incoming, PATH);
 
                 // Submit task to executor service
-                es.submit(task);
+                es.execute(task);
             }
         }
         catch (BindException e){
